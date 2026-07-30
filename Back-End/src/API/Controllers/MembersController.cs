@@ -1,4 +1,8 @@
-using LibraryManagementSystem.Domain.Enums;
+using LibraryManagementSystem.Application.Members.Commands.CreateMember;
+using LibraryManagementSystem.Application.Members.Commands.DeleteMember;
+using LibraryManagementSystem.Application.Members.Commands.UpdateMember;
+using LibraryManagementSystem.Application.Members.Queries.GetAllMembers;
+using LibraryManagementSystem.Application.Members.Queries.GetMemberById;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,33 +22,41 @@ public class MembersController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll()
     {
-        return Ok("List all members");
+        var members = await _mediator.Send(new GetAllMembersQuery());
+        return Ok(members);
     }
 
     [HttpGet("{id:guid}")]
-    public IActionResult GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id)
     {
-        return Ok($"Member {id}");
+        var member = await _mediator.Send(new GetMemberByIdQuery(id));
+        return Ok(member);
     }
 
     [HttpPost]
-    public IActionResult Create()
+    public async Task<IActionResult> Create(CreateMemberCommand command)
     {
-        return Ok("Member created");
+        var id = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetById), new { id }, id);
     }
 
     [HttpPut("{id:guid}")]
-    public IActionResult Update(Guid id)
+    public async Task<IActionResult> Update(Guid id, UpdateMemberCommand command)
     {
-        return Ok($"Member {id} updated");
+        if (id != command.Id)
+            return BadRequest("Route id does not match body id.");
+
+        await _mediator.Send(command);
+        return NoContent();
     }
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Admin")]
-    public IActionResult Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id)
     {
-        return Ok($"Member {id} deleted");
+        await _mediator.Send(new DeleteMemberCommand(id));
+        return NoContent();
     }
 }
