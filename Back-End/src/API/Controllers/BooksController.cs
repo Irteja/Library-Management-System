@@ -1,8 +1,11 @@
-using LibraryManagementSystem.Application.Books.Commands.BorrowBook;
 using LibraryManagementSystem.Application.Books.Commands;
+using LibraryManagementSystem.Application.Books.Commands.BorrowBook;
+using LibraryManagementSystem.Application.Books.Commands.DeleteBook;
 using LibraryManagementSystem.Application.Books.Commands.ReserveBook;
 using LibraryManagementSystem.Application.Books.Commands.ReturnBook;
-using LibraryManagementSystem.Domain.Enums;
+using LibraryManagementSystem.Application.Books.Commands.UpdateBook;
+using LibraryManagementSystem.Application.Books.Queries.GetAllBooks;
+using LibraryManagementSystem.Application.Books.Queries.GetBookById;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,15 +25,17 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll()
     {
-        return Ok("List all books");
+        var books = await _mediator.Send(new GetAllBooksQuery());
+        return Ok(books);
     }
 
     [HttpGet("{id:guid}")]
-    public IActionResult GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id)
     {
-        return Ok($"Book {id}");
+        var book = await _mediator.Send(new GetBookByIdQuery(id));
+        return Ok(book);
     }
 
     [HttpPost]
@@ -43,16 +48,21 @@ public class BooksController : ControllerBase
 
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "Admin,Librarian")]
-    public IActionResult Update(Guid id)
+    public async Task<IActionResult> Update(Guid id, UpdateBookCommand command)
     {
-        return Ok($"Book {id} updated");
+        if (id != command.Id)
+            return BadRequest("Route id does not match body id.");
+
+        await _mediator.Send(command);
+        return NoContent();
     }
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Admin")]
-    public IActionResult Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id)
     {
-        return Ok($"Book {id} deleted");
+        await _mediator.Send(new DeleteBookCommand(id));
+        return NoContent();
     }
 
     [HttpPost("borrow")]
