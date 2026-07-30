@@ -1,6 +1,5 @@
 using LibraryManagementSystem.Application.Books.Commands;
 using LibraryManagementSystem.Application.Books.Commands.DeleteBook;
-using LibraryManagementSystem.Application.Books.Commands.ReserveBook;
 using LibraryManagementSystem.Application.Books.Commands.UpdateBook;
 using LibraryManagementSystem.Application.Books.Queries.GetAllBooks;
 using LibraryManagementSystem.Application.Books.Queries.GetBookById;
@@ -63,11 +62,4 @@ public class BooksController : ControllerBase
         return NoContent();
     }
 
-    [HttpPost("reserve")]
-    [Authorize(Roles = "Admin,Librarian,Member")]
-    public async Task<IActionResult> Reserve(ReserveBookCommand command)
-    {
-        var reservationId = await _mediator.Send(command);
-        return Ok(new { ReservationId = reservationId });
-    }
 }

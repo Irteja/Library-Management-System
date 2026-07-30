@@ -23,6 +23,9 @@ public class ReserveBookCommandHandler : IRequestHandler<ReserveBookCommand, Gui
             .FirstOrDefaultAsync(b => b.Id == request.BookId, cancellationToken)
             ?? throw new NotFoundException("Book", request.BookId);
 
+        if (book.AvailableCopies > 0)
+            throw new InvalidOperationException("Book has available copies. Please borrow instead of reserving.");
+
         var existing = await _context.Reservations
             .AnyAsync(r => r.BookId == request.BookId
                         && r.MemberId == request.MemberId
