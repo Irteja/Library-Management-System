@@ -1,8 +1,6 @@
 using LibraryManagementSystem.Application.Books.Commands;
-using LibraryManagementSystem.Application.Books.Commands.BorrowBook;
 using LibraryManagementSystem.Application.Books.Commands.DeleteBook;
 using LibraryManagementSystem.Application.Books.Commands.ReserveBook;
-using LibraryManagementSystem.Application.Books.Commands.ReturnBook;
 using LibraryManagementSystem.Application.Books.Commands.UpdateBook;
 using LibraryManagementSystem.Application.Books.Queries.GetAllBooks;
 using LibraryManagementSystem.Application.Books.Queries.GetBookById;
@@ -62,22 +60,6 @@ public class BooksController : ControllerBase
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeleteBookCommand(id));
-        return NoContent();
-    }
-
-    [HttpPost("borrow")]
-    [Authorize(Roles = "Admin,Librarian,Member")]
-    public async Task<IActionResult> Borrow(BorrowBookCommand command)
-    {
-        var loanId = await _mediator.Send(command);
-        return Ok(new { LoanId = loanId });
-    }
-
-    [HttpPost("return")]
-    [Authorize(Roles = "Admin,Librarian")]
-    public async Task<IActionResult> Return(ReturnBookCommand command)
-    {
-        await _mediator.Send(command);
         return NoContent();
     }
 

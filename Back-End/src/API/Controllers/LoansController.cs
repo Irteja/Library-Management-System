@@ -1,4 +1,6 @@
-using LibraryManagementSystem.Domain.Enums;
+using LibraryManagementSystem.Application.Books.Commands.BorrowBook;
+using LibraryManagementSystem.Application.Books.Commands.ReturnBook;
+using LibraryManagementSystem.Application.Loans.Queries.GetMemberLoans;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,16 +19,27 @@ public class LoansController : ControllerBase
         _mediator = mediator;
     }
 
-    [HttpGet]
-    [Authorize(Roles = "Admin,Librarian")]
-    public IActionResult GetAll()
+    [HttpPost("borrow")]
+    [Authorize(Roles = "Admin,Librarian,Member")]
+    public async Task<IActionResult> Borrow(BorrowBookCommand command)
     {
-        return Ok("List all loans");
+        var loanId = await _mediator.Send(command);
+        return Ok(new { LoanId = loanId });
     }
 
-    [HttpGet("{id:guid}")]
-    public IActionResult GetById(Guid id)
+    [HttpPost("return")]
+    [Authorize(Roles = "Admin,Librarian")]
+    public async Task<IActionResult> Return(ReturnBookCommand command)
     {
-        return Ok($"Loan {id}");
+        await _mediator.Send(command);
+        return NoContent();
+    }
+
+    [HttpGet("member/{memberId:guid}")]
+    [Authorize(Roles = "Admin,Librarian,Member")]
+    public async Task<IActionResult> GetMemberHistory(Guid memberId)
+    {
+        var loans = await _mediator.Send(new GetMemberLoansQuery(memberId));
+        return Ok(loans);
     }
 }

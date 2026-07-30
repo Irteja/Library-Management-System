@@ -3,7 +3,6 @@ using LibraryManagementSystem.Application.Branches.Commands.DeleteBranch;
 using LibraryManagementSystem.Application.Branches.Commands.UpdateBranch;
 using LibraryManagementSystem.Application.Branches.Queries.GetAllBranches;
 using LibraryManagementSystem.Application.Branches.Queries.GetBranchById;
-using LibraryManagementSystem.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
