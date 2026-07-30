@@ -1,0 +1,57 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.log
+*.vs/
+*.DotSettings.user
+*.csproj.user
+*.dbmdl
+*.jfm
+TestResults/
+*.trx
+*.tmp
+*.dll
+*.exe
+*.pdb
+.nuget/
+*.nupkg
+packages/
+*.nuget.props
+*.nuget.targets
+
+# IDE
+.idea/
+.vs/
+.vscode/
+*.sln.docstates
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# Logs
+Logs/
+logs/
+*.log
+
+# Environment
+appsettings.Development.json
+appsettings.*.local.json
+*.Development.json
+*.local.json
+*.user
+
+# Serilog
+Logs/
+
+# EF Core Migrations (keep in repo, but ignore generated snapshots if desired)
+# src/Infrastructure/Data/Migrations/*.Designer.cs
+
+# Secrets
+**/appsettings.*.local.json
+**/secrets.json
