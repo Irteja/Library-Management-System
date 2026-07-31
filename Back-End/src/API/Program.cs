@@ -27,6 +27,14 @@ try
 
     builder.Services.AddControllers();
 
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("Frontend", policy =>
+            policy.WithOrigins("http://localhost:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod());
+    });
+
     builder.Services.AddSwaggerGen(c =>
     {
         c.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo { Title = "Library Management System API", Version = "v1" });
@@ -97,6 +105,7 @@ try
     }
 
     app.UseHttpsRedirection();
+    app.UseCors("Frontend");
     app.UseAuthentication();
     app.UseAuthorization();
 
