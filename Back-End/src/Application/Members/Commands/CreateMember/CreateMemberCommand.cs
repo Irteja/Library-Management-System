@@ -7,5 +7,8 @@ public record CreateMemberCommand(
     string LastName,
     string Email,
     string Phone,
-    DateTime MembershipExpiryDate
+    DateTime MembershipExpiryDate,
+    string Username,
+    string Password,
+    string Role = "Member"
 ) : IRequest<Guid>;

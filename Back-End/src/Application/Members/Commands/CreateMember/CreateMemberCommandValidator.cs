@@ -11,5 +11,8 @@ public class CreateMemberCommandValidator : AbstractValidator<CreateMemberComman
         RuleFor(v => v.Email).NotEmpty().EmailAddress().MaximumLength(200);
         RuleFor(v => v.Phone).NotEmpty().MaximumLength(20);
         RuleFor(v => v.MembershipExpiryDate).GreaterThan(DateTime.UtcNow);
+        RuleFor(v => v.Username).NotEmpty().MaximumLength(100);
+        RuleFor(v => v.Password).NotEmpty().MinimumLength(6);
+        RuleFor(v => v.Role).Must(r => r == "Member" || r == "Librarian").When(v => !string.IsNullOrEmpty(v.Role));
     }
 }

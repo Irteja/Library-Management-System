@@ -1,22 +1,46 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { createMember, getMembers } from '../services/memberService';
 
-const emptyForm = {
+const emptyMemberForm = {
   firstName: '',
   lastName: '',
   email: '',
   phone: '',
   membershipExpiryDate: '',
+  username: '',
+  password: '',
+};
+
+const emptyLibrarianForm = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  membershipExpiryDate: '',
+  username: '',
+  password: '',
 };
 
 export default function MemberManagement() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
+
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [form, setForm] = useState(emptyForm);
-  const [formError, setFormError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState('');
+
+  // Member creation state
+  const [memberForm, setMemberForm] = useState(emptyMemberForm);
+  const [memberFormError, setMemberFormError] = useState('');
+  const [memberSubmitting, setMemberSubmitting] = useState(false);
+  const [memberMessage, setMemberMessage] = useState('');
+
+  // Librarian creation state (Admin only)
+  const [librarianForm, setLibrarianForm] = useState(emptyLibrarianForm);
+  const [librarianFormError, setLibrarianFormError] = useState('');
+  const [librarianSubmitting, setLibrarianSubmitting] = useState(false);
+  const [librarianMessage, setLibrarianMessage] = useState('');
 
   const loadMembers = () => {
     setLoading(true);
@@ -29,30 +53,69 @@ export default function MemberManagement() {
 
   useEffect(loadMembers, []);
 
-  const handleChange = (event) => {
-    setForm({ ...form, [event.target.name]: event.target.value });
+  const extractError = (err) => {
+    const data = err.response?.data;
+    if (data?.errors && typeof data.errors === 'object') {
+      return Object.values(data.errors).flat().join(' ');
+    }
+    return data?.detail || data?.title || 'Operation failed. Please try again.';
   };
 
-  const handleSubmit = async (event) => {
+  // Member form handlers
+  const handleMemberChange = (event) => {
+    setMemberForm({ ...memberForm, [event.target.name]: event.target.value });
+  };
+
+  const handleMemberSubmit = async (event) => {
     event.preventDefault();
-    setFormError('');
-    setMessage('');
+    setMemberFormError('');
+    setMemberMessage('');
 
     const payload = {
-      ...form,
-      membershipExpiryDate: new Date(form.membershipExpiryDate).toISOString(),
+      ...memberForm,
+      membershipExpiryDate: new Date(memberForm.membershipExpiryDate).toISOString(),
+      role: 'Member',
     };
 
-    setSubmitting(true);
+    setMemberSubmitting(true);
     try {
       await createMember(payload);
-      setForm(emptyForm);
-      setMessage('Member created successfully.');
+      setMemberForm(emptyMemberForm);
+      setMemberMessage('Member created successfully.');
       loadMembers();
     } catch (err) {
-      setFormError(err.response?.data?.title ?? 'Failed to create member.');
+      setMemberFormError(extractError(err));
     } finally {
-      setSubmitting(false);
+      setMemberSubmitting(false);
+    }
+  };
+
+  // Librarian form handlers
+  const handleLibrarianChange = (event) => {
+    setLibrarianForm({ ...librarianForm, [event.target.name]: event.target.value });
+  };
+
+  const handleLibrarianSubmit = async (event) => {
+    event.preventDefault();
+    setLibrarianFormError('');
+    setLibrarianMessage('');
+
+    const payload = {
+      ...librarianForm,
+      membershipExpiryDate: new Date(librarianForm.membershipExpiryDate).toISOString(),
+      role: 'Librarian',
+    };
+
+    setLibrarianSubmitting(true);
+    try {
+      await createMember(payload);
+      setLibrarianForm(emptyLibrarianForm);
+      setLibrarianMessage('Librarian created successfully.');
+      loadMembers();
+    } catch (err) {
+      setLibrarianFormError(extractError(err));
+    } finally {
+      setLibrarianSubmitting(false);
     }
   };
 
@@ -60,39 +123,94 @@ export default function MemberManagement() {
     <div>
       <h1>Member Management</h1>
 
+      {/* Create Member Section */}
       <section className="panel">
         <h2>Register New Member</h2>
-        <form className="form-grid" onSubmit={handleSubmit}>
+        <form className="form-grid" onSubmit={handleMemberSubmit}>
           <label className="form-field">
             <span>First Name</span>
-            <input name="firstName" value={form.firstName} onChange={handleChange} required />
+            <input name="firstName" value={memberForm.firstName} onChange={handleMemberChange} required />
           </label>
           <label className="form-field">
             <span>Last Name</span>
-            <input name="lastName" value={form.lastName} onChange={handleChange} required />
+            <input name="lastName" value={memberForm.lastName} onChange={handleMemberChange} required />
           </label>
           <label className="form-field">
             <span>Email</span>
-            <input type="email" name="email" value={form.email} onChange={handleChange} required />
+            <input type="email" name="email" value={memberForm.email} onChange={handleMemberChange} required />
           </label>
           <label className="form-field">
             <span>Phone</span>
-            <input name="phone" value={form.phone} onChange={handleChange} required />
+            <input name="phone" value={memberForm.phone} onChange={handleMemberChange} required />
+          </label>
+          <label className="form-field">
+            <span>Username</span>
+            <input name="username" value={memberForm.username} onChange={handleMemberChange} required autoComplete="off" />
+          </label>
+          <label className="form-field">
+            <span>Password</span>
+            <input type="password" name="password" value={memberForm.password} onChange={handleMemberChange} required autoComplete="new-password" placeholder="Min. 6 characters" />
           </label>
           <label className="form-field">
             <span>Membership Expiry</span>
-            <input type="date" name="membershipExpiryDate" value={form.membershipExpiryDate} onChange={handleChange} required />
+            <input type="date" name="membershipExpiryDate" value={memberForm.membershipExpiryDate} onChange={handleMemberChange} required />
           </label>
           <div className="form-actions">
-            <button className="btn btn-primary" type="submit" disabled={submitting}>
-              {submitting ? 'Creating...' : 'Create Member'}
+            <button className="btn btn-primary" type="submit" disabled={memberSubmitting}>
+              {memberSubmitting ? 'Creating...' : 'Create Member'}
             </button>
           </div>
         </form>
-        {formError && <p className="error">{formError}</p>}
-        {message && <p className="success">{message}</p>}
+        {memberFormError && <p className="error">{memberFormError}</p>}
+        {memberMessage && <p className="success">{memberMessage}</p>}
       </section>
 
+      {/* Create Librarian Section (Admin only) */}
+      {isAdmin && (
+        <section className="panel">
+          <h2>Register New Librarian</h2>
+          <p className="muted" style={{ marginBottom: '1rem' }}>Only admins can create librarian accounts.</p>
+          <form className="form-grid" onSubmit={handleLibrarianSubmit}>
+            <label className="form-field">
+              <span>First Name</span>
+              <input name="firstName" value={librarianForm.firstName} onChange={handleLibrarianChange} required />
+            </label>
+            <label className="form-field">
+              <span>Last Name</span>
+              <input name="lastName" value={librarianForm.lastName} onChange={handleLibrarianChange} required />
+            </label>
+            <label className="form-field">
+              <span>Email</span>
+              <input type="email" name="email" value={librarianForm.email} onChange={handleLibrarianChange} required />
+            </label>
+            <label className="form-field">
+              <span>Phone</span>
+              <input name="phone" value={librarianForm.phone} onChange={handleLibrarianChange} required />
+            </label>
+            <label className="form-field">
+              <span>Username</span>
+              <input name="username" value={librarianForm.username} onChange={handleLibrarianChange} required autoComplete="off" />
+            </label>
+            <label className="form-field">
+              <span>Password</span>
+              <input type="password" name="password" value={librarianForm.password} onChange={handleLibrarianChange} required autoComplete="new-password" placeholder="Min. 6 characters" />
+            </label>
+            <label className="form-field">
+              <span>Membership Expiry</span>
+              <input type="date" name="membershipExpiryDate" value={librarianForm.membershipExpiryDate} onChange={handleLibrarianChange} required />
+            </label>
+            <div className="form-actions">
+              <button className="btn btn-primary" type="submit" disabled={librarianSubmitting}>
+                {librarianSubmitting ? 'Creating...' : 'Create Librarian'}
+              </button>
+            </div>
+          </form>
+          {librarianFormError && <p className="error">{librarianFormError}</p>}
+          {librarianMessage && <p className="success">{librarianMessage}</p>}
+        </section>
+      )}
+
+      {/* Members List */}
       <section className="panel">
         <h2>Members</h2>
         {loading && <p className="muted">Loading members...</p>}
