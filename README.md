@@ -67,7 +67,6 @@ This project was built with a strong focus on maintainability, scalability, and 
    ```bash
    dotnet run
    ```
-   *The API will typically run on `https://localhost:7082` or similar.*
 
 ### Frontend Setup
 1. Navigate to the frontend directory:
