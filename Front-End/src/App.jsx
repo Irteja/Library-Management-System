@@ -9,6 +9,8 @@ import Login from './pages/Login';
 import MemberManagement from './pages/MemberManagement';
 import MyLoans from './pages/MyLoans';
 import NotFound from './pages/NotFound';
+import Reports from './pages/Reports';
+import ReservationQueue from './pages/ReservationQueue';
 
 export default function App() {
   return (
@@ -47,6 +49,22 @@ export default function App() {
               element={
                 <ProtectedRoute roles={['Admin', 'Librarian']}>
                   <BorrowReturn />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reservations"
+              element={
+                <ProtectedRoute roles={['Admin', 'Librarian']}>
+                  <ReservationQueue />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute roles={['Admin', 'Librarian']}>
+                  <Reports />
                 </ProtectedRoute>
               }
             />

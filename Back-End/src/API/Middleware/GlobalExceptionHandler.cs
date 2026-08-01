@@ -46,6 +46,14 @@ public class GlobalExceptionHandler : IExceptionHandler
                     Title = "Unauthorized",
                     Detail = ua.Message
                 }),
+            InvalidOperationException ioe => (
+                HttpStatusCode.BadRequest,
+                new ProblemDetails
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Title = "Bad Request",
+                    Detail = ioe.Message
+                }),
             _ => (
                 HttpStatusCode.InternalServerError,
                 new ProblemDetails

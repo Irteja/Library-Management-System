@@ -1,5 +1,6 @@
 using LibraryManagementSystem.Application.Books.Commands.ReserveBook;
 using LibraryManagementSystem.Application.Reservations.Commands.CancelReservation;
+using LibraryManagementSystem.Application.Reservations.Queries.GetActiveReservations;
 using LibraryManagementSystem.Application.Reservations.Queries.GetBookReservationQueue;
 using LibraryManagementSystem.Application.Reservations.Queries.GetMemberReservations;
 using MediatR;
@@ -39,6 +40,14 @@ public class ReservationsController : ControllerBase
     public async Task<IActionResult> GetMemberReservations(Guid memberId)
     {
         var reservations = await _mediator.Send(new GetMemberReservationsQuery(memberId));
+        return Ok(reservations);
+    }
+
+    [HttpGet("active")]
+    [Authorize(Roles = "Admin,Librarian")]
+    public async Task<IActionResult> GetActiveReservations()
+    {
+        var reservations = await _mediator.Send(new GetActiveReservationsQuery());
         return Ok(reservations);
     }
 

@@ -5,7 +5,9 @@ const NAV_ITEMS = [
   { label: 'Dashboard', path: '/dashboard', roles: ['Admin', 'Librarian', 'Member'] },
   { label: 'Books', path: '/books', roles: ['Admin', 'Librarian', 'Member'] },
   { label: 'Borrow & Return', path: '/borrow-return', roles: ['Admin', 'Librarian'] },
+  { label: 'Reservations', path: '/reservations', roles: ['Admin', 'Librarian'] },
   { label: 'Members', path: '/members', roles: ['Admin', 'Librarian'] },
+  { label: 'Reports', path: '/reports', roles: ['Admin', 'Librarian'] },
   { label: 'My Loans', path: '/my-loans', roles: ['Member'] },
 ];
 
