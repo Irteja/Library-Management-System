@@ -1,5 +1,6 @@
 using LibraryManagementSystem.Application.Books.Commands.BorrowBook;
 using LibraryManagementSystem.Application.Books.Commands.ReturnBook;
+using LibraryManagementSystem.Application.Loans.Queries.GetActiveLoans;
 using LibraryManagementSystem.Application.Loans.Queries.GetMemberLoans;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +34,14 @@ public class LoansController : ControllerBase
     {
         await _mediator.Send(command);
         return NoContent();
+    }
+
+    [HttpGet("active")]
+    [Authorize(Roles = "Admin,Librarian")]
+    public async Task<IActionResult> GetActiveLoans()
+    {
+        var loans = await _mediator.Send(new GetActiveLoansQuery());
+        return Ok(loans);
     }
 
     [HttpGet("member/{memberId:guid}")]
