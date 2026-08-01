@@ -30,6 +30,14 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  const setSession = useCallback((tokenData) => {
+    const { token, username, email, role } = tokenData;
+    const profile = { username, email, role };
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(profile));
+    setUser(profile);
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -37,8 +45,9 @@ export function AuthProvider({ children }) {
       role: user?.role ?? null,
       login,
       logout,
+      setSession,
     }),
-    [user, login, logout],
+    [user, login, logout, setSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

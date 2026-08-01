@@ -8,7 +8,7 @@ namespace LibraryManagementSystem.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin,Librarian")]
+[Authorize(Roles = "Admin")]
 public class ReportsController : ControllerBase
 {
     private readonly IMediator _mediator;

@@ -10,6 +10,7 @@ public class Member
     public DateTime MembershipDate { get; set; } = DateTime.UtcNow;
     public DateTime MembershipExpiryDate { get; set; }
     public bool IsActive { get; set; } = true;
+    public Guid? UserId { get; set; }
 
     public ICollection<Loan> Loans { get; set; } = new List<Loan>();
     public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();

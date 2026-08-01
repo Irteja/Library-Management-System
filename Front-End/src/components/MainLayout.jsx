@@ -2,20 +2,41 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', path: '/dashboard', roles: ['Admin', 'Librarian', 'Member'] },
-  { label: 'Books', path: '/books', roles: ['Admin', 'Librarian', 'Member'] },
+  {
+    label: 'Dashboard',
+    path: '/dashboard',
+    roles: ['Admin', 'Member'],
+    labelByRole: { Member: 'My Dashboard' },
+  },
+  {
+    label: 'Books',
+    path: '/books',
+    roles: ['Admin', 'Librarian', 'Member'],
+    labelByRole: { Member: 'Book Catalog' },
+  },
+  {
+    label: 'My Loans',
+    path: '/my-loans',
+    roles: ['Member'],
+  },
+  {
+    label: 'My Reservations',
+    path: '/my-reservations',
+    roles: ['Member'],
+  },
   { label: 'Borrow & Return', path: '/borrow-return', roles: ['Admin', 'Librarian'] },
   { label: 'Reservations', path: '/reservations', roles: ['Admin', 'Librarian'] },
   { label: 'Members', path: '/members', roles: ['Admin', 'Librarian'] },
-  { label: 'Reports', path: '/reports', roles: ['Admin', 'Librarian'] },
-  { label: 'My Loans', path: '/my-loans', roles: ['Member'] },
+  { label: 'Branches', path: '/branches', roles: ['Admin'] },
+  { label: 'Reports', path: '/reports', roles: ['Admin'] },
 ];
 
 export default function MainLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const role = user?.role;
 
-  const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(user?.role));
+  const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(role));
 
   const handleLogout = () => {
     logout();
@@ -30,8 +51,8 @@ export default function MainLayout() {
         <span className="app-brand">Library MS</span>
         <nav className="app-nav">
           {visibleItems.map((item) => (
-            <NavLink key={item.path} to={item.path} className={navLinkClass} end={item.path === '/'}>
-              {item.label}
+            <NavLink key={item.path} to={item.path} className={navLinkClass}>
+              {item.labelByRole?.[role] ?? item.label}
             </NavLink>
           ))}
         </nav>

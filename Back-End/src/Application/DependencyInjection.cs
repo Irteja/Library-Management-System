@@ -1,6 +1,7 @@
 using System.Reflection;
 using FluentValidation;
 using LibraryManagementSystem.Application.Common.Behaviours;
+using LibraryManagementSystem.Application.Common.Services;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,6 +18,8 @@ public static class DependencyInjection
         });
 
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+
+        services.AddScoped<IMemberAccessService, MemberAccessService>();
 
         return services;
     }

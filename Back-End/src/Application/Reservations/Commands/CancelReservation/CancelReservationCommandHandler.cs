@@ -1,5 +1,6 @@
 using LibraryManagementSystem.Application.Common.Exceptions;
 using LibraryManagementSystem.Application.Common.Interfaces;
+using LibraryManagementSystem.Application.Common.Services;
 using LibraryManagementSystem.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -9,8 +10,13 @@ namespace LibraryManagementSystem.Application.Reservations.Commands.CancelReserv
 public class CancelReservationCommandHandler : IRequestHandler<CancelReservationCommand>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IMemberAccessService _memberAccess;
 
-    public CancelReservationCommandHandler(IApplicationDbContext context) => _context = context;
+    public CancelReservationCommandHandler(IApplicationDbContext context, IMemberAccessService memberAccess)
+    {
+        _context = context;
+        _memberAccess = memberAccess;
+    }
 
     public async Task Handle(CancelReservationCommand request, CancellationToken cancellationToken)
     {
@@ -20,6 +26,12 @@ public class CancelReservationCommandHandler : IRequestHandler<CancelReservation
 
         if (reservation.Status != ReservationStatus.Pending)
             throw new InvalidOperationException("Only pending reservations can be cancelled.");
+
+        var currentMemberId = await _memberAccess.GetCurrentMemberIdAsync(cancellationToken);
+        if (currentMemberId is not null && reservation.MemberId != currentMemberId)
+        {
+            throw new ForbiddenAccessException("You may only cancel your own reservations.");
+        }
 
         reservation.Status = ReservationStatus.Cancelled;
 

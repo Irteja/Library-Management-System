@@ -1,5 +1,6 @@
 using LibraryManagementSystem.Application.Common.Exceptions;
 using LibraryManagementSystem.Application.Common.Interfaces;
+using LibraryManagementSystem.Application.Common.Services;
 using LibraryManagementSystem.Domain.Entities;
 using LibraryManagementSystem.Domain.Enums;
 using MediatR;
@@ -10,14 +11,21 @@ namespace LibraryManagementSystem.Application.Books.Commands.ReserveBook;
 public class ReserveBookCommandHandler : IRequestHandler<ReserveBookCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IMemberAccessService _memberAccess;
 
-    public ReserveBookCommandHandler(IApplicationDbContext context) => _context = context;
+    public ReserveBookCommandHandler(IApplicationDbContext context, IMemberAccessService memberAccess)
+    {
+        _context = context;
+        _memberAccess = memberAccess;
+    }
 
     public async Task<Guid> Handle(ReserveBookCommand request, CancellationToken cancellationToken)
     {
+        var memberId = await _memberAccess.GetAccessibleMemberIdAsync(request.MemberId, cancellationToken);
+
         var member = await _context.Members
-            .FirstOrDefaultAsync(m => m.Id == request.MemberId && m.IsActive, cancellationToken)
-            ?? throw new NotFoundException("Member", request.MemberId);
+            .FirstOrDefaultAsync(m => m.Id == memberId && m.IsActive, cancellationToken)
+            ?? throw new NotFoundException("Member", memberId);
 
         var book = await _context.Books
             .FirstOrDefaultAsync(b => b.Id == request.BookId, cancellationToken)
@@ -28,7 +36,7 @@ public class ReserveBookCommandHandler : IRequestHandler<ReserveBookCommand, Gui
 
         var existing = await _context.Reservations
             .AnyAsync(r => r.BookId == request.BookId
-                        && r.MemberId == request.MemberId
+                        && r.MemberId == memberId
                         && r.Status == ReservationStatus.Pending, cancellationToken);
 
         if (existing)
@@ -42,7 +50,7 @@ public class ReserveBookCommandHandler : IRequestHandler<ReserveBookCommand, Gui
         {
             Id = Guid.NewGuid(),
             BookId = request.BookId,
-            MemberId = request.MemberId,
+            MemberId = memberId,
             BranchId = request.BranchId,
             ReservedAt = DateTime.UtcNow,
             ExpiresAt = DateTime.UtcNow.AddDays(7),

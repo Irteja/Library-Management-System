@@ -1,3 +1,4 @@
+using LibraryManagementSystem.Application.Common.Services;
 using LibraryManagementSystem.Application.Members.Commands.CreateMember;
 using LibraryManagementSystem.Application.Members.Commands.DeleteMember;
 using LibraryManagementSystem.Application.Members.Commands.UpdateMember;
@@ -11,17 +12,20 @@ namespace LibraryManagementSystem.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin,Librarian")]
+[Authorize]
 public class MembersController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMemberAccessService _memberAccess;
 
-    public MembersController(IMediator mediator)
+    public MembersController(IMediator mediator, IMemberAccessService memberAccess)
     {
         _mediator = mediator;
+        _memberAccess = memberAccess;
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Librarian")]
     public async Task<IActionResult> GetAll()
     {
         var members = await _mediator.Send(new GetAllMembersQuery());
@@ -29,13 +33,24 @@ public class MembersController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = "Admin,Librarian")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var member = await _mediator.Send(new GetMemberByIdQuery(id));
         return Ok(member);
     }
 
+    [HttpGet("me")]
+    [Authorize(Roles = "Member")]
+    public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
+    {
+        var memberId = await _memberAccess.GetCurrentMemberIdAsync(cancellationToken);
+        var member = await _mediator.Send(new GetMemberByIdQuery(memberId!.Value), cancellationToken);
+        return Ok(member);
+    }
+
     [HttpPost]
+    [Authorize(Roles = "Admin,Librarian")]
     public async Task<IActionResult> Create(CreateMemberCommand command)
     {
         var id = await _mediator.Send(command);
@@ -43,6 +58,7 @@ public class MembersController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin,Librarian")]
     public async Task<IActionResult> Update(Guid id, UpdateMemberCommand command)
     {
         if (id != command.Id)

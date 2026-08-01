@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getMyProfile } from '../services/memberService';
 import { getReportSummary } from '../services/reportService';
 
-const REPORT_ROLES = ['Admin', 'Librarian'];
+const REPORT_ROLES = ['Admin'];
 
 export default function Dashboard() {
   const { user } = useAuth();
   const canViewReports = REPORT_ROLES.includes(user?.role);
+  const isMember = user?.role === 'Member';
 
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(canViewReports);
   const [error, setError] = useState('');
+
+  const [profile, setProfile] = useState(null);
+  const [profileError, setProfileError] = useState('');
 
   useEffect(() => {
     if (!canViewReports) return;
@@ -21,6 +27,14 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, [canViewReports]);
 
+  useEffect(() => {
+    if (!isMember) return;
+
+    getMyProfile()
+      .then(({ data }) => setProfile(data))
+      .catch((err) => setProfileError(err.response?.data?.title ?? err.message));
+  }, [isMember]);
+
   return (
     <div>
       <h1>Dashboard</h1>
@@ -28,9 +42,47 @@ export default function Dashboard() {
         Welcome, <strong>{user?.username}</strong> ({user?.role})
       </p>
 
-      {!canViewReports && (
+      {isMember && (
+        <>
+          {profile && (
+            <section className="panel">
+              <h2>Membership</h2>
+              <p>
+                <strong>
+                  {profile.firstName} {profile.lastName}
+                </strong>
+              </p>
+              <p className="muted">{profile.email}</p>
+              <p>
+                Expires: {new Date(profile.membershipExpiryDate).toLocaleDateString()}{' '}
+                <span className={profile.isActive ? 'success' : 'error'}>
+                  {profile.isActive ? '(Active)' : '(Inactive)'}
+                </span>
+              </p>
+            </section>
+          )}
+          {profileError && <p className="error">{profileError}</p>}
+
+          <div className="stat-grid">
+            <div className="stat-card">
+              <span className="stat-label">Loans</span>
+              <Link to="/my-loans" className="btn btn-primary">
+                View My Loans
+              </Link>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Reservations</span>
+              <Link to="/my-reservations" className="btn btn-primary">
+                View My Reservations
+              </Link>
+            </div>
+          </div>
+        </>
+      )}
+
+      {!canViewReports && !isMember && (
         <p className="muted">
-          Library statistics are available to Admin and Librarian accounts only.
+          Library statistics are available to Admin accounts only.
         </p>
       )}
 

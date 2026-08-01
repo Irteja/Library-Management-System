@@ -63,6 +63,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             entity.Property(e => e.Email).HasMaxLength(200).IsRequired();
             entity.HasIndex(e => e.Email).IsUnique();
             entity.Property(e => e.Phone).HasMaxLength(20);
+            entity.HasIndex(e => e.UserId).IsUnique();
         });
 
         modelBuilder.Entity<Loan>(entity =>

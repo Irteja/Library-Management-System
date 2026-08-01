@@ -38,6 +38,14 @@ public class GlobalExceptionHandler : IExceptionHandler
                     Title = "Not Found",
                     Detail = nf.Message
                 }),
+            ForbiddenAccessException fa => (
+                HttpStatusCode.Forbidden,
+                new ProblemDetails
+                {
+                    Status = (int)HttpStatusCode.Forbidden,
+                    Title = "Forbidden",
+                    Detail = fa.Message
+                }),
             UnauthorizedAccessException ua => (
                 HttpStatusCode.Unauthorized,
                 new ProblemDetails

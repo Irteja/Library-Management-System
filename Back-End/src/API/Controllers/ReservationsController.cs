@@ -1,4 +1,5 @@
 using LibraryManagementSystem.Application.Books.Commands.ReserveBook;
+using LibraryManagementSystem.Application.Common.Services;
 using LibraryManagementSystem.Application.Reservations.Commands.CancelReservation;
 using LibraryManagementSystem.Application.Reservations.Queries.GetActiveReservations;
 using LibraryManagementSystem.Application.Reservations.Queries.GetBookReservationQueue;
@@ -15,10 +16,12 @@ namespace LibraryManagementSystem.API.Controllers;
 public class ReservationsController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMemberAccessService _memberAccess;
 
-    public ReservationsController(IMediator mediator)
+    public ReservationsController(IMediator mediator, IMemberAccessService memberAccess)
     {
         _mediator = mediator;
+        _memberAccess = memberAccess;
     }
 
     [HttpPost]
@@ -65,5 +68,14 @@ public class ReservationsController : ControllerBase
     {
         await _mediator.Send(new CancelReservationCommand(id));
         return NoContent();
+    }
+
+    [HttpGet("my")]
+    [Authorize(Roles = "Member")]
+    public async Task<IActionResult> GetMyReservations(CancellationToken cancellationToken)
+    {
+        var memberId = await _memberAccess.GetCurrentMemberIdAsync(cancellationToken);
+        var reservations = await _mediator.Send(new GetMemberReservationsQuery(memberId!.Value), cancellationToken);
+        return Ok(reservations);
     }
 }

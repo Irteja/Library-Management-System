@@ -1,5 +1,6 @@
 using System.Text;
 using LibraryManagementSystem.API.Middleware;
+using LibraryManagementSystem.API.Services;
 using LibraryManagementSystem.Application;
 using LibraryManagementSystem.Application.Common.Interfaces;
 using LibraryManagementSystem.Infrastructure;
@@ -62,6 +63,9 @@ try
 
     builder.Services.AddScoped<IApplicationDbContext>(provider =>
         provider.GetRequiredService<ApplicationDbContext>());
+
+    builder.Services.AddHttpContextAccessor();
+    builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
     builder.Services.AddProblemDetails();
