@@ -80,7 +80,8 @@ public class BorrowBookCommandHandlerTests
             .Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
-        _handler = new BorrowBookCommandHandler(_contextMock.Object);
+        var memberAccessMock = new Mock<LibraryManagementSystem.Application.Common.Services.IMemberAccessService>();
+        _handler = new BorrowBookCommandHandler(_contextMock.Object, memberAccessMock.Object);
     }
 
     [Fact]
