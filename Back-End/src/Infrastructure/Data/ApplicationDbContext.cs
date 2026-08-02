@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Loan> Loans => Set<Loan>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<Librarian> Librarians => Set<Librarian>();
 
     IQueryable<Branch> IApplicationDbContext.Branches => Branches;
     IQueryable<Book> IApplicationDbContext.Books => Books;
@@ -23,6 +24,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     IQueryable<Loan> IApplicationDbContext.Loans => Loans;
     IQueryable<User> IApplicationDbContext.Users => Users;
     IQueryable<Reservation> IApplicationDbContext.Reservations => Reservations;
+    IQueryable<Librarian> IApplicationDbContext.Librarians => Librarians;
 
     void IApplicationDbContext.Add<TEntity>(TEntity entity) => Add(entity);
     void IApplicationDbContext.Update<TEntity>(TEntity entity) => Update(entity);
@@ -128,6 +130,26 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
             entity.HasOne(e => e.Branch)
                   .WithMany(b => b.Reservations)
+                  .HasForeignKey(e => e.BranchId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Librarian>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FirstName).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.LastName).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(200).IsRequired();
+            entity.HasIndex(e => e.Email).IsUnique();
+            entity.Property(e => e.Phone).HasMaxLength(20);
+            
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Branch)
+                  .WithMany()
                   .HasForeignKey(e => e.BranchId)
                   .OnDelete(DeleteBehavior.Restrict);
         });

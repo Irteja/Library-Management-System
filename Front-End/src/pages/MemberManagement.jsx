@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { createMember, getMembers } from '../services/memberService';
+import { getBranches } from '../services/branchService';
+import api from '../services/api';
 
 const emptyMemberForm = {
   firstName: '',
@@ -17,9 +19,9 @@ const emptyLibrarianForm = {
   lastName: '',
   email: '',
   phone: '',
-  membershipExpiryDate: '',
   username: '',
   password: '',
+  branchId: '',
 };
 
 export default function MemberManagement() {
@@ -27,6 +29,7 @@ export default function MemberManagement() {
   const isAdmin = user?.role === 'Admin';
 
   const [members, setMembers] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -42,16 +45,19 @@ export default function MemberManagement() {
   const [librarianSubmitting, setLibrarianSubmitting] = useState(false);
   const [librarianMessage, setLibrarianMessage] = useState('');
 
-  const loadMembers = () => {
+  const loadData = () => {
     setLoading(true);
     setError('');
-    getMembers()
-      .then(({ data }) => setMembers(data))
+    
+    Promise.all([
+      getMembers().then(res => setMembers(res.data)),
+      isAdmin ? getBranches().then(res => setBranches(res.data)) : Promise.resolve()
+    ])
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
 
-  useEffect(loadMembers, []);
+  useEffect(loadData, [isAdmin]);
 
   const extractError = (err) => {
     const data = err.response?.data;
@@ -74,7 +80,6 @@ export default function MemberManagement() {
     const payload = {
       ...memberForm,
       membershipExpiryDate: new Date(memberForm.membershipExpiryDate).toISOString(),
-      role: 'Member',
     };
 
     setMemberSubmitting(true);
@@ -82,7 +87,7 @@ export default function MemberManagement() {
       await createMember(payload);
       setMemberForm(emptyMemberForm);
       setMemberMessage('Member created successfully.');
-      loadMembers();
+      loadData();
     } catch (err) {
       setMemberFormError(extractError(err));
     } finally {
@@ -100,18 +105,16 @@ export default function MemberManagement() {
     setLibrarianFormError('');
     setLibrarianMessage('');
 
-    const payload = {
-      ...librarianForm,
-      membershipExpiryDate: new Date(librarianForm.membershipExpiryDate).toISOString(),
-      role: 'Librarian',
-    };
+    if (!librarianForm.branchId) {
+      setLibrarianFormError('Please select a branch.');
+      return;
+    }
 
     setLibrarianSubmitting(true);
     try {
-      await createMember(payload);
+      await api.post('/Librarians', librarianForm);
       setLibrarianForm(emptyLibrarianForm);
       setLibrarianMessage('Librarian created successfully.');
-      loadMembers();
     } catch (err) {
       setLibrarianFormError(extractError(err));
     } finally {
@@ -121,7 +124,7 @@ export default function MemberManagement() {
 
   return (
     <div>
-      <h1>Member Management</h1>
+      <h1>Member & Staff Management</h1>
 
       {/* Create Member Section */}
       <section className="panel">
@@ -169,7 +172,7 @@ export default function MemberManagement() {
       {isAdmin && (
         <section className="panel">
           <h2>Register New Librarian</h2>
-          <p className="muted" style={{ marginBottom: '1rem' }}>Only admins can create librarian accounts.</p>
+          <p className="muted" style={{ marginBottom: '1rem' }}>Assign a new librarian to a specific branch.</p>
           <form className="form-grid" onSubmit={handleLibrarianSubmit}>
             <label className="form-field">
               <span>First Name</span>
@@ -196,8 +199,13 @@ export default function MemberManagement() {
               <input type="password" name="password" value={librarianForm.password} onChange={handleLibrarianChange} required autoComplete="new-password" placeholder="Min. 6 characters" />
             </label>
             <label className="form-field">
-              <span>Membership Expiry</span>
-              <input type="date" name="membershipExpiryDate" value={librarianForm.membershipExpiryDate} onChange={handleLibrarianChange} required />
+              <span>Assign to Branch</span>
+              <select name="branchId" value={librarianForm.branchId} onChange={handleLibrarianChange} required>
+                <option value="" disabled>-- Select a Branch --</option>
+                {branches.map(b => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
             </label>
             <div className="form-actions">
               <button className="btn btn-primary" type="submit" disabled={librarianSubmitting}>
@@ -212,7 +220,7 @@ export default function MemberManagement() {
 
       {/* Members List */}
       <section className="panel">
-        <h2>Members</h2>
+        <h2>Members Directory</h2>
         {loading && <p className="muted">Loading members...</p>}
         {error && <p className="error">Failed to load members: {error}</p>}
         {!loading && !error && (

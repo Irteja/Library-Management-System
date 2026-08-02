@@ -10,6 +10,7 @@ public interface IApplicationDbContext
     IQueryable<Loan> Loans { get; }
     IQueryable<User> Users { get; }
     IQueryable<Reservation> Reservations { get; }
+    IQueryable<Librarian> Librarians { get; }
 
     void Add<TEntity>(TEntity entity) where TEntity : class;
     void Update<TEntity>(TEntity entity) where TEntity : class;
