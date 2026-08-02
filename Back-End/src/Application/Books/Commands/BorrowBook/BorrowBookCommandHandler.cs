@@ -31,6 +31,9 @@ public class BorrowBookCommandHandler : IRequestHandler<BorrowBookCommand, Guid>
             .FirstOrDefaultAsync(b => b.Id == request.BookId, cancellationToken)
             ?? throw new NotFoundException("Book", request.BookId);
 
+        if (book.BranchId != request.BranchId)
+            throw new InvalidOperationException("The requested book is not available in the selected branch.");
+
         if (book.AvailableCopies <= 0)
             throw new InvalidOperationException("No copies available. Please place a reservation instead.");
 
