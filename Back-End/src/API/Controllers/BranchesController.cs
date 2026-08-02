@@ -11,7 +11,7 @@ namespace LibraryManagementSystem.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize]
 public class BranchesController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -36,6 +36,7 @@ public class BranchesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create(CreateBranchCommand command)
     {
         var id = await _mediator.Send(command);
@@ -43,6 +44,7 @@ public class BranchesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(Guid id, UpdateBranchCommand command)
     {
         if (id != command.Id)
@@ -53,6 +55,7 @@ public class BranchesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeleteBranchCommand(id));
