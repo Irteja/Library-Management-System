@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { createMember, getMembers } from '../services/memberService';
-import { getBranches } from '../services/branchService';
-import api from '../services/api';
 
 const emptyMemberForm = {
   firstName: '',
@@ -14,22 +11,8 @@ const emptyMemberForm = {
   password: '',
 };
 
-const emptyLibrarianForm = {
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  username: '',
-  password: '',
-  branchId: '',
-};
-
 export default function MemberManagement() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'Admin';
-
   const [members, setMembers] = useState([]);
-  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -37,6 +20,8 @@ export default function MemberManagement() {
   const [memberForm, setMemberForm] = useState(emptyMemberForm);
   const [memberFormError, setMemberFormError] = useState('');
   const [memberSubmitting, setMemberSubmitting] = useState(false);
+  const [memberMessage, setMemberMessage] = useState('');
+
   const loadData = () => {
     setLoading(true);
     setError('');
@@ -47,7 +32,9 @@ export default function MemberManagement() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(loadData, []);
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const extractError = (err) => {
     const data = err.response?.data;
@@ -91,6 +78,45 @@ export default function MemberManagement() {
 
       {/* Create Member Section */}
       <section className="panel">
+        <h2>Register New Member</h2>
+        <form className="form-grid" onSubmit={handleMemberSubmit}>
+          <label className="form-field">
+            <span>First Name</span>
+            <input name="firstName" value={memberForm.firstName} onChange={handleMemberChange} required />
+          </label>
+          <label className="form-field">
+            <span>Last Name</span>
+            <input name="lastName" value={memberForm.lastName} onChange={handleMemberChange} required />
+          </label>
+          <label className="form-field">
+            <span>Email</span>
+            <input type="email" name="email" value={memberForm.email} onChange={handleMemberChange} required />
+          </label>
+          <label className="form-field">
+            <span>Phone</span>
+            <input name="phone" value={memberForm.phone} onChange={handleMemberChange} required />
+          </label>
+          <label className="form-field">
+            <span>Username</span>
+            <input name="username" value={memberForm.username} onChange={handleMemberChange} required autoComplete="off" />
+          </label>
+          <label className="form-field">
+            <span>Password</span>
+            <input type="password" name="password" value={memberForm.password} onChange={handleMemberChange} required autoComplete="new-password" placeholder="Min. 6 characters" />
+          </label>
+          <label className="form-field">
+            <span>Membership Expiry</span>
+            <input type="date" name="membershipExpiryDate" value={memberForm.membershipExpiryDate} onChange={handleMemberChange} required />
+          </label>
+          <div className="form-actions">
+            <button className="btn btn-primary" type="submit" disabled={memberSubmitting}>
+              {memberSubmitting ? 'Creating...' : 'Create Member'}
+            </button>
+          </div>
+        </form>
+        {memberFormError && <p className="error">{memberFormError}</p>}
+        {memberMessage && <p className="success">{memberMessage}</p>}
+      </section>
 
       {/* Members List */}
       <section className="panel">
