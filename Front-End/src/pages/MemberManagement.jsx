@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { createMember, getMembers } from '../services/memberService';
+import { createMember, getMembers, updateMember } from '../services/memberService';
 
 const emptyMemberForm = {
   firstName: '',
@@ -28,6 +28,11 @@ export default function MemberManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
+
+  // Extension state
+  const [extendingMember, setExtendingMember] = useState(null);
+  const [newExpiryDate, setNewExpiryDate] = useState('');
+  const [isExtending, setIsExtending] = useState(false);
 
   const loadData = () => {
     setLoading(true);
@@ -82,6 +87,30 @@ export default function MemberManagement() {
     }
   };
 
+  const handleExtendSubmit = async (event) => {
+    event.preventDefault();
+    setIsExtending(true);
+    try {
+      const payload = {
+        id: extendingMember.id,
+        firstName: extendingMember.firstName,
+        lastName: extendingMember.lastName,
+        email: extendingMember.email,
+        phone: extendingMember.phone,
+        isActive: extendingMember.isActive,
+        membershipExpiryDate: new Date(newExpiryDate).toISOString(),
+      };
+      await updateMember(extendingMember.id, payload);
+      setExtendingMember(null);
+      setNewExpiryDate('');
+      loadData();
+    } catch (err) {
+      alert(extractError(err));
+    } finally {
+      setIsExtending(false);
+    }
+  };
+
   return (
     <div>
       <h1>Member Management</h1>
@@ -133,20 +162,43 @@ export default function MemberManagement() {
         <h2>Members Directory</h2>
 
         {!loading && !error && (
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            setSearchQuery(searchInput);
-            setCurrentPage(1);
-          }} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="text"
-              placeholder="Search by name or email..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              style={{ padding: '0.5rem', width: '100%', maxWidth: '300px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
-            <button type="submit" className="btn btn-primary">Search</button>
-          </form>
+          <>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              setSearchQuery(searchInput);
+              setCurrentPage(1);
+            }} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                placeholder="Search by name or email..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                style={{ padding: '0.5rem', width: '100%', maxWidth: '300px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+              <button type="submit" className="btn btn-primary">Search</button>
+            </form>
+
+            {extendingMember && (
+              <div className="panel" style={{ marginBottom: '1rem', border: '1px solid var(--primary-color)' }}>
+                <h3>Extend Membership for {extendingMember.firstName} {extendingMember.lastName}</h3>
+                <form onSubmit={handleExtendSubmit} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                  <label className="form-field">
+                    <span>New Expiry Date</span>
+                    <input 
+                      type="date" 
+                      value={newExpiryDate} 
+                      onChange={(e) => setNewExpiryDate(e.target.value)} 
+                      required 
+                    />
+                  </label>
+                  <div className="form-actions">
+                    <button type="submit" className="btn btn-primary" disabled={isExtending}>Confirm</button>
+                    <button type="button" className="btn btn-outline" onClick={() => setExtendingMember(null)}>Cancel</button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </>
         )}
 
         {loading && <p className="muted">Loading members...</p>}
@@ -161,6 +213,7 @@ export default function MemberManagement() {
                   <th>Phone</th>
                   <th>Expiry</th>
                   <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -174,11 +227,25 @@ export default function MemberManagement() {
                       <td>{member.phone}</td>
                       <td>{new Date(member.membershipExpiryDate).toLocaleDateString()}</td>
                       <td>{member.isActive ? 'Active' : 'Inactive'}</td>
+                      <td>
+                        <button 
+                          className="btn btn-outline"
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+                          disabled={!member.isActive}
+                          title={!member.isActive ? "Only active members can be extended" : "Extend membership"}
+                          onClick={() => {
+                            setExtendingMember(member);
+                            setNewExpiryDate(member.membershipExpiryDate.split('T')[0]);
+                          }}
+                        >
+                          Extend
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="muted" style={{ textAlign: 'center', padding: '1rem' }}>
+                    <td colSpan="6" className="muted" style={{ textAlign: 'center', padding: '1rem' }}>
                       No matching members found.
                     </td>
                   </tr>
