@@ -12,11 +12,13 @@ public class BorrowBookCommandHandler : IRequestHandler<BorrowBookCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
     private readonly IMemberAccessService _memberAccess;
+    private readonly ICurrentUserService _currentUser;
 
-    public BorrowBookCommandHandler(IApplicationDbContext context, IMemberAccessService memberAccess)
+    public BorrowBookCommandHandler(IApplicationDbContext context, IMemberAccessService memberAccess, ICurrentUserService currentUser)
     {
         _context = context;
         _memberAccess = memberAccess;
+        _currentUser = currentUser;
     }
 
     public async Task<Guid> Handle(BorrowBookCommand request, CancellationToken cancellationToken)
@@ -26,6 +28,19 @@ public class BorrowBookCommandHandler : IRequestHandler<BorrowBookCommand, Guid>
         var member = await _context.Members
             .FirstOrDefaultAsync(m => m.Id == memberId && m.IsActive, cancellationToken)
             ?? throw new NotFoundException("Member", memberId);
+
+        if (_currentUser.Role == "Librarian" && _currentUser.UserId.HasValue)
+        {
+            var librarianBranchId = await _context.Librarians
+                .Where(l => l.UserId == _currentUser.UserId.Value)
+                .Select(l => (Guid?)l.BranchId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (librarianBranchId.HasValue && request.BranchId != librarianBranchId.Value)
+            {
+                throw new ForbiddenAccessException("Librarians can only process borrows for their assigned branch.");
+            }
+        }
 
         var book = await _context.Books
             .FirstOrDefaultAsync(b => b.Id == request.BookId, cancellationToken)

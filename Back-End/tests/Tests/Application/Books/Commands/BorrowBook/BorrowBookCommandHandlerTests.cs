@@ -81,7 +81,10 @@ public class BorrowBookCommandHandlerTests
             .ReturnsAsync(1);
 
         var memberAccessMock = new Mock<LibraryManagementSystem.Application.Common.Services.IMemberAccessService>();
-        _handler = new BorrowBookCommandHandler(_contextMock.Object, memberAccessMock.Object);
+        var currentUserMock = new Mock<ICurrentUserService>();
+        currentUserMock.SetupGet(m => m.Role).Returns("Member");
+
+        _handler = new BorrowBookCommandHandler(_contextMock.Object, memberAccessMock.Object, currentUserMock.Object);
     }
 
     [Fact]
