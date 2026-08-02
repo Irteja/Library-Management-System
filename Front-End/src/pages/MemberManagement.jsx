@@ -22,6 +22,24 @@ export default function MemberManagement() {
   const [memberSubmitting, setMemberSubmitting] = useState(false);
   const [memberMessage, setMemberMessage] = useState('');
 
+  // Search and Pagination
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const filteredMembers = members.filter((member) => {
+    const term = searchTerm.toLowerCase();
+    const fullName = `${member.firstName} ${member.lastName}`.toLowerCase();
+    return (
+      fullName.includes(term) ||
+      (member.email && member.email.toLowerCase().includes(term))
+    );
+  });
+
+  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentMembers = filteredMembers.slice(startIndex, startIndex + itemsPerPage);
+
   const loadData = () => {
     setLoading(true);
     setError('');
@@ -121,33 +139,79 @@ export default function MemberManagement() {
       {/* Members List */}
       <section className="panel">
         <h2>Members Directory</h2>
+
+        {!loading && !error && members.length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            <input
+              type="text"
+              placeholder="Search by name or email..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              style={{ padding: '0.5rem', width: '100%', maxWidth: '300px', borderRadius: '4px', border: '1px solid #ccc' }}
+            />
+          </div>
+        )}
+
         {loading && <p className="muted">Loading members...</p>}
         {error && <p className="error">Failed to load members: {error}</p>}
-        {!loading && !error && (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Expiry</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((member) => (
-                <tr key={member.id}>
-                  <td>
-                    {member.firstName} {member.lastName}
-                  </td>
-                  <td>{member.email}</td>
-                  <td>{member.phone}</td>
-                  <td>{new Date(member.membershipExpiryDate).toLocaleDateString()}</td>
-                  <td>{member.isActive ? 'Active' : 'Inactive'}</td>
+        {!loading && !error && members.length > 0 && (
+          <>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Expiry</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {currentMembers.length > 0 ? (
+                  currentMembers.map((member) => (
+                    <tr key={member.id}>
+                      <td>
+                        {member.firstName} {member.lastName}
+                      </td>
+                      <td>{member.email}</td>
+                      <td>{member.phone}</td>
+                      <td>{new Date(member.membershipExpiryDate).toLocaleDateString()}</td>
+                      <td>{member.isActive ? 'Active' : 'Inactive'}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="muted" style={{ textAlign: 'center', padding: '1rem' }}>
+                      No matching members found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                <button 
+                  className="btn btn-outline" 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                >
+                  Previous
+                </button>
+                <span>Page {currentPage} of {totalPages}</span>
+                <button 
+                  className="btn btn-outline" 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
         {!loading && !error && members.length === 0 && <p className="muted">No members found.</p>}
       </section>

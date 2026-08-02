@@ -24,6 +24,25 @@ export default function StaffManagement() {
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Search and Pagination
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const filteredLibrarians = librarians.filter((lib) => {
+    const term = searchTerm.toLowerCase();
+    const fullName = `${lib.firstName} ${lib.lastName}`.toLowerCase();
+    return (
+      fullName.includes(term) ||
+      (lib.username && lib.username.toLowerCase().includes(term)) ||
+      (lib.branchName && lib.branchName.toLowerCase().includes(term))
+    );
+  });
+
+  const totalPages = Math.ceil(filteredLibrarians.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentLibrarians = filteredLibrarians.slice(startIndex, startIndex + itemsPerPage);
+
   const loadData = () => {
     setLoading(true);
     setError('');
@@ -140,33 +159,79 @@ export default function StaffManagement() {
       {/* Librarians List */}
       <section className="panel">
         <h2>Librarians Directory</h2>
+
+        {!loading && !error && librarians.length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            <input
+              type="text"
+              placeholder="Search by name, username, or branch..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              style={{ padding: '0.5rem', width: '100%', maxWidth: '300px', borderRadius: '4px', border: '1px solid #ccc' }}
+            />
+          </div>
+        )}
+
         {loading && <p className="muted">Loading staff...</p>}
         {error && <p className="error">Failed to load staff: {error}</p>}
-        {!loading && !error && (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Branch</th>
-              </tr>
-            </thead>
-            <tbody>
-              {librarians.map((lib) => (
-                <tr key={lib.id}>
-                  <td>
-                    {lib.firstName} {lib.lastName}
-                  </td>
-                  <td>{lib.username}</td>
-                  <td>{lib.email}</td>
-                  <td>{lib.phone}</td>
-                  <td>{lib.branchName}</td>
+        {!loading && !error && librarians.length > 0 && (
+          <>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Branch</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {currentLibrarians.length > 0 ? (
+                  currentLibrarians.map((lib) => (
+                    <tr key={lib.id}>
+                      <td>
+                        {lib.firstName} {lib.lastName}
+                      </td>
+                      <td>{lib.username}</td>
+                      <td>{lib.email}</td>
+                      <td>{lib.phone}</td>
+                      <td>{lib.branchName}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="muted" style={{ textAlign: 'center', padding: '1rem' }}>
+                      No matching staff found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                <button 
+                  className="btn btn-outline" 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                >
+                  Previous
+                </button>
+                <span>Page {currentPage} of {totalPages}</span>
+                <button 
+                  className="btn btn-outline" 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
         {!loading && !error && librarians.length === 0 && <p className="muted">No staff found.</p>}
       </section>

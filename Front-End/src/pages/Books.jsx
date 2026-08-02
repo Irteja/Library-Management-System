@@ -21,6 +21,9 @@ export default function Books() {
 
   const [books, setBooks] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -88,6 +91,20 @@ export default function Books() {
     const value = e.target.type === 'number' ? Number(e.target.value) : e.target.value;
     setForm({ ...form, [e.target.name]: value });
   };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const filteredBooks = books.filter(book =>
+    (book.title && book.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (book.author && book.author.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (book.isbn && book.isbn.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+  
+  const totalPages = Math.ceil(filteredBooks.length / itemsPerPage) || 1;
+  const paginatedBooks = filteredBooks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -218,36 +235,69 @@ export default function Books() {
       {error && <p className="error">Failed to load books: {error}</p>}
       
       {!loading && !error && (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Author</th>
-              <th>ISBN</th>
-              <th>Available</th>
-              {isStaff && <th>Actions</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {books.map((book) => (
-              <tr key={book.id}>
-                <td>{book.title}</td>
-                <td>{book.author}</td>
-                <td>{book.isbn}</td>
-                <td>{book.availableCopies} / {book.totalCopies}</td>
-                {isStaff && (
-                  <td>
-                    <button className="btn btn-outline btn-sm" onClick={() => handleEditClick(book)}>
-                      Edit
-                    </button>
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <>
+          <div style={{ marginBottom: '1rem' }}>
+            <input
+              type="text"
+              placeholder="Search by title, author, or ISBN..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              style={{ padding: '0.5rem', width: '100%', maxWidth: '400px' }}
+            />
+          </div>
+          {filteredBooks.length > 0 ? (
+            <>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>ISBN</th>
+                    <th>Available</th>
+                    {isStaff && <th>Actions</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedBooks.map((book) => (
+                    <tr key={book.id}>
+                      <td>{book.title}</td>
+                      <td>{book.author}</td>
+                      <td>{book.isbn}</td>
+                      <td>{book.availableCopies} / {book.totalCopies}</td>
+                      {isStaff && (
+                        <td>
+                          <button className="btn btn-outline btn-sm" onClick={() => handleEditClick(book)}>
+                            Edit
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </button>
+                <span>Page {currentPage} of {totalPages}</span>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="muted">No books found.</p>
+          )}
+        </>
       )}
-      {!loading && !error && books.length === 0 && <p className="muted">No books found.</p>}
     </div>
   );
 }

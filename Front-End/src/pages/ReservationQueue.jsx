@@ -13,6 +13,9 @@ export default function ReservationQueue() {
   const [books, setBooks] = useState([]);
   const [branches, setBranches] = useState([]);
   const [reservations, setReservations] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [form, setForm] = useState({ memberId: '', bookId: '', branchId: '' });
   const [formError, setFormError] = useState('');
@@ -86,6 +89,19 @@ export default function ReservationQueue() {
   const activeMembers = members.filter((member) => member.isActive);
   const activeBranches = branches.filter((branch) => branch.isActive);
 
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const filteredReservations = reservations.filter(res =>
+    (res.memberName && res.memberName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (res.bookTitle && res.bookTitle.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const totalPages = Math.ceil(filteredReservations.length / itemsPerPage) || 1;
+  const paginatedReservations = filteredReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <div>
       <h1>Reservation Queue</h1>
@@ -147,43 +163,74 @@ export default function ReservationQueue() {
         {loading && <p className="muted">Loading reservations...</p>}
         {error && <p className="error">Failed to load reservations: {error}</p>}
         {!loading && !error && (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Book</th>
-                <th>Member</th>
-                <th>Reserved</th>
-                <th>Expires</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {reservations.map((reservation) => (
-                <tr key={reservation.id}>
-                  <td>{reservation.queuePosition}</td>
-                  <td>
-                    {reservation.bookTitle} <span className="muted">({reservation.bookAuthor})</span>
-                  </td>
-                  <td>{reservation.memberName}</td>
-                  <td>{new Date(reservation.reservedAt).toLocaleDateString()}</td>
-                  <td>{new Date(reservation.expiresAt).toLocaleDateString()}</td>
-                  <td>
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => handleCancel(reservation.id)}
-                      disabled={cancellingId === reservation.id}
-                    >
-                      {cancellingId === reservation.id ? 'Cancelling...' : 'Cancel'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        {!loading && !error && reservations.length === 0 && (
-          <p className="muted">No active reservations.</p>
+          <>
+            <div style={{ marginBottom: '1rem' }}>
+              <input
+                type="text"
+                placeholder="Search by member name or book title..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                style={{ padding: '0.5rem', width: '100%', maxWidth: '400px' }}
+              />
+            </div>
+            {filteredReservations.length > 0 ? (
+              <>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Book</th>
+                      <th>Member</th>
+                      <th>Reserved</th>
+                      <th>Expires</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedReservations.map((reservation) => (
+                      <tr key={reservation.id}>
+                        <td>{reservation.queuePosition}</td>
+                        <td>
+                          {reservation.bookTitle} <span className="muted">({reservation.bookAuthor})</span>
+                        </td>
+                        <td>{reservation.memberName}</td>
+                        <td>{new Date(reservation.reservedAt).toLocaleDateString()}</td>
+                        <td>{new Date(reservation.expiresAt).toLocaleDateString()}</td>
+                        <td>
+                          <button
+                            className="btn btn-outline"
+                            onClick={() => handleCancel(reservation.id)}
+                            disabled={cancellingId === reservation.id}
+                          >
+                            {cancellingId === reservation.id ? 'Cancelling...' : 'Cancel'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </button>
+                  <span>Page {currentPage} of {totalPages}</span>
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="muted">No active reservations found.</p>
+            )}
+          </>
         )}
       </section>
     </div>

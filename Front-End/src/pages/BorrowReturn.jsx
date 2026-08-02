@@ -9,6 +9,9 @@ export default function BorrowReturn() {
   const [books, setBooks] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loans, setLoans] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [form, setForm] = useState({ memberId: '', bookId: '', branchId: '' });
   const [formError, setFormError] = useState('');
@@ -83,6 +86,19 @@ export default function BorrowReturn() {
   const activeMembers = members.filter((member) => member.isActive);
   const activeBranches = branches.filter((branch) => branch.isActive);
 
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const filteredLoans = loans.filter(loan =>
+    (loan.memberName && loan.memberName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (loan.bookTitle && loan.bookTitle.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const totalPages = Math.ceil(filteredLoans.length / itemsPerPage) || 1;
+  const paginatedLoans = filteredLoans.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <div>
       <h1>Borrow &amp; Return</h1>
@@ -141,42 +157,75 @@ export default function BorrowReturn() {
         {loading && <p className="muted">Loading loans...</p>}
         {error && <p className="error">Failed to load loans: {error}</p>}
         {!loading && !error && (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Book</th>
-                <th>Member</th>
-                <th>Borrowed</th>
-                <th>Due</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {loans.map((loan) => (
-                <tr key={loan.id}>
-                  <td>
-                    {loan.bookTitle} <span className="muted">({loan.bookAuthor})</span>
-                  </td>
-                  <td>{loan.memberName}</td>
-                  <td>{new Date(loan.loanDate).toLocaleDateString()}</td>
-                  <td>{new Date(loan.dueDate).toLocaleDateString()}</td>
-                  <td>{loan.status}</td>
-                  <td>
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => handleReturn(loan.id)}
-                      disabled={returningId === loan.id}
-                    >
-                      {returningId === loan.id ? 'Returning...' : 'Return'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <>
+            <div style={{ marginBottom: '1rem' }}>
+              <input
+                type="text"
+                placeholder="Search by member name or book title..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                style={{ padding: '0.5rem', width: '100%', maxWidth: '400px' }}
+              />
+            </div>
+            {filteredLoans.length > 0 ? (
+              <>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Book</th>
+                      <th>Member</th>
+                      <th>Borrowed</th>
+                      <th>Due</th>
+                      <th>Status</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedLoans.map((loan) => (
+                      <tr key={loan.id}>
+                        <td>
+                          {loan.bookTitle} <span className="muted">({loan.bookAuthor})</span>
+                        </td>
+                        <td>{loan.memberName}</td>
+                        <td>{new Date(loan.loanDate).toLocaleDateString()}</td>
+                        <td>{new Date(loan.dueDate).toLocaleDateString()}</td>
+                        <td>{loan.status}</td>
+                        <td>
+                          <button
+                            className="btn btn-outline"
+                            onClick={() => handleReturn(loan.id)}
+                            disabled={returningId === loan.id}
+                          >
+                            {returningId === loan.id ? 'Returning...' : 'Return'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </button>
+                  <span>Page {currentPage} of {totalPages}</span>
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="muted">No active loans found.</p>
+            )}
+          </>
         )}
-        {!loading && !error && loans.length === 0 && <p className="muted">No active loans.</p>}
       </section>
     </div>
   );
