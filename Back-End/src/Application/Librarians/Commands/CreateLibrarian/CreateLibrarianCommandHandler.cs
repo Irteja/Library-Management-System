@@ -6,15 +6,15 @@ using LibraryManagementSystem.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace LibraryManagementSystem.Application.Members.Commands.CreateMember;
+namespace LibraryManagementSystem.Application.Librarians.Commands.CreateLibrarian;
 
-public class CreateMemberCommandHandler : IRequestHandler<CreateMemberCommand, Guid>
+public class CreateLibrarianCommandHandler : IRequestHandler<CreateLibrarianCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
 
-    public CreateMemberCommandHandler(IApplicationDbContext context) => _context = context;
+    public CreateLibrarianCommandHandler(IApplicationDbContext context) => _context = context;
 
-    public async Task<Guid> Handle(CreateMemberCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateLibrarianCommand request, CancellationToken cancellationToken)
     {
         if (await _context.Users.AnyAsync(u => u.Username == request.Username, cancellationToken))
         {
@@ -26,35 +26,39 @@ public class CreateMemberCommandHandler : IRequestHandler<CreateMemberCommand, G
             throw new ValidationException(new[] { new ValidationFailure("Email", "Email already exists.") });
         }
 
+        var branchExists = await _context.Branches.AnyAsync(b => b.Id == request.BranchId, cancellationToken);
+        if (!branchExists)
+        {
+            throw new ValidationException(new[] { new ValidationFailure("BranchId", "Branch does not exist.") });
+        }
+
         var user = new User
         {
             Id = Guid.NewGuid(),
             Username = request.Username,
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = UserRole.Member,
+            Role = UserRole.Librarian,
             CreatedAt = DateTime.UtcNow,
             IsActive = true
         };
 
         _context.Add(user);
 
-        var member = new Member
+        var librarian = new Librarian
         {
             Id = Guid.NewGuid(),
             FirstName = request.FirstName,
             LastName = request.LastName,
             Email = request.Email,
             Phone = request.Phone,
-            MembershipDate = DateTime.UtcNow,
-            MembershipExpiryDate = request.MembershipExpiryDate,
-            IsActive = true,
-            UserId = user.Id
+            UserId = user.Id,
+            BranchId = request.BranchId
         };
 
-        _context.Add(member);
+        _context.Add(librarian);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return member.Id;
+        return librarian.Id;
     }
 }
