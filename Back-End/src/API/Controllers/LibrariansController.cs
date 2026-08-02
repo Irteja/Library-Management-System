@@ -23,4 +23,11 @@ public class LibrariansController : ControllerBase
         var id = await _mediator.Send(command);
         return Ok(id);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var librarians = await _mediator.Send(new LibraryManagementSystem.Application.Librarians.Queries.GetAllLibrarians.GetAllLibrariansQuery());
+        return Ok(librarians);
+    }
 }

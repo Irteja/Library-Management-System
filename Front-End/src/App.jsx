@@ -14,6 +14,7 @@ import MyReservations from './pages/MyReservations';
 import NotFound from './pages/NotFound';
 import Reports from './pages/Reports';
 import ReservationQueue from './pages/ReservationQueue';
+import StaffManagement from './pages/StaffManagement';
 import Unauthorized from './pages/Unauthorized';
 
 const DEFAULT_PATHS = {
@@ -104,6 +105,14 @@ export default function App() {
               element={
                 <ProtectedRoute allowedRoles={['Admin']}>
                   <Reports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/staff"
+              element={
+                <ProtectedRoute allowedRoles={['Admin']}>
+                  <StaffManagement />
                 </ProtectedRoute>
               }
             />

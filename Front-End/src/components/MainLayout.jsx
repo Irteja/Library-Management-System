@@ -28,6 +28,7 @@ const NAV_ITEMS = [
   { label: 'Reservations', path: '/reservations', roles: ['Admin', 'Librarian'] },
   { label: 'Members', path: '/members', roles: ['Admin', 'Librarian'] },
   { label: 'Branches', path: '/branches', roles: ['Admin'] },
+  { label: 'Staff', path: '/staff', roles: ['Admin'] },
   { label: 'Reports', path: '/reports', roles: ['Admin'] },
 ];
 
