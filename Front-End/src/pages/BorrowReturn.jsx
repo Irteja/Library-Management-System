@@ -10,7 +10,9 @@ export default function BorrowReturn() {
   const [branches, setBranches] = useState([]);
   const [loans, setLoans] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
   const [form, setForm] = useState({ memberId: '', bookId: '', branchId: '' });
@@ -24,28 +26,34 @@ export default function BorrowReturn() {
 
   const loadOptions = async () => {
     const [memberRes, bookRes, branchRes] = await Promise.all([
-      getMembers(),
-      getBooks(),
-      getBranches(),
+      getMembers({ size: 1000 }),
+      getBooks({ size: 1000 }),
+      getBranches({ size: 1000 }),
     ]);
-    setMembers(memberRes.data);
-    setBooks(bookRes.data);
-    setBranches(branchRes.data);
+    setMembers(memberRes.data.items || []);
+    setBooks(bookRes.data.items || []);
+    setBranches(branchRes.data.items || []);
   };
 
   const loadLoans = () => {
     setLoading(true);
     setError('');
-    getActiveLoans()
-      .then(({ data }) => setLoans(data))
+    getActiveLoans({ search: searchQuery, page: currentPage, size: itemsPerPage })
+      .then(({ data }) => {
+        setLoans(data.items || []);
+        setTotalPages(data.totalPages || 1);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     loadOptions().catch((err) => setFormError(err.message));
-    loadLoans();
   }, []);
+
+  useEffect(() => {
+    loadLoans();
+  }, [currentPage, searchQuery]);
 
   const handleChange = (event) => {
     setForm({ ...form, [event.target.name]: event.target.value });
@@ -86,18 +94,7 @@ export default function BorrowReturn() {
   const activeMembers = members.filter((member) => member.isActive);
   const activeBranches = branches.filter((branch) => branch.isActive);
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-    setCurrentPage(1);
-  };
 
-  const filteredLoans = loans.filter(loan =>
-    (loan.memberName && loan.memberName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (loan.bookTitle && loan.bookTitle.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-  const totalPages = Math.ceil(filteredLoans.length / itemsPerPage) || 1;
-  const paginatedLoans = filteredLoans.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div>
@@ -158,16 +155,21 @@ export default function BorrowReturn() {
         {error && <p className="error">Failed to load loans: {error}</p>}
         {!loading && !error && (
           <>
-            <div style={{ marginBottom: '1rem' }}>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              setSearchQuery(searchInput);
+              setCurrentPage(1);
+            }} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
               <input
                 type="text"
                 placeholder="Search by member name or book title..."
-                value={searchQuery}
-                onChange={handleSearchChange}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 style={{ padding: '0.5rem', width: '100%', maxWidth: '400px' }}
               />
-            </div>
-            {filteredLoans.length > 0 ? (
+              <button type="submit" className="btn btn-primary">Search</button>
+            </form>
+            {loans.length > 0 ? (
               <>
                 <table className="data-table">
                   <thead>
@@ -181,7 +183,7 @@ export default function BorrowReturn() {
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedLoans.map((loan) => (
+                    {loans.map((loan) => (
                       <tr key={loan.id}>
                         <td>
                           {loan.bookTitle} <span className="muted">({loan.bookAuthor})</span>

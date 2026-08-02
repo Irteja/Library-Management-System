@@ -22,7 +22,9 @@ export default function Books() {
   const [books, setBooks] = useState([]);
   const [branches, setBranches] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -38,8 +40,11 @@ export default function Books() {
     setError('');
     
     Promise.all([
-      getBooks().then(res => setBooks(res.data)),
-      isStaff ? getBranches().then(res => setBranches(res.data)) : Promise.resolve()
+      getBooks({ search: searchQuery, page: currentPage, size: itemsPerPage }).then(res => {
+        setBooks(res.data.items || []);
+        setTotalPages(res.data.totalPages || 1);
+      }),
+      isStaff ? getBranches({ size: 1000 }).then(res => setBranches(res.data.items || [])) : Promise.resolve()
     ])
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -47,7 +52,7 @@ export default function Books() {
 
   useEffect(() => {
     loadData();
-  }, [isStaff]);
+  }, [isStaff, currentPage, searchQuery]);
 
   const extractError = (err) => {
     const data = err.response?.data;
@@ -93,18 +98,14 @@ export default function Books() {
   };
 
   const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-    setCurrentPage(1);
+    setSearchInput(e.target.value);
   };
 
-  const filteredBooks = books.filter(book =>
-    (book.title && book.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (book.author && book.author.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (book.isbn && book.isbn.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-  
-  const totalPages = Math.ceil(filteredBooks.length / itemsPerPage) || 1;
-  const paginatedBooks = filteredBooks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setSearchQuery(searchInput);
+    setCurrentPage(1);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -236,16 +237,17 @@ export default function Books() {
       
       {!loading && !error && (
         <>
-          <div style={{ marginBottom: '1rem' }}>
+          <form onSubmit={handleSearchSubmit} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
             <input
               type="text"
               placeholder="Search by title, author, or ISBN..."
-              value={searchQuery}
+              value={searchInput}
               onChange={handleSearchChange}
               style={{ padding: '0.5rem', width: '100%', maxWidth: '400px' }}
             />
-          </div>
-          {filteredBooks.length > 0 ? (
+            <button type="submit" className="btn btn-primary">Search</button>
+          </form>
+          {books.length > 0 ? (
             <>
               <table className="data-table">
                 <thead>
@@ -258,7 +260,7 @@ export default function Books() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedBooks.map((book) => (
+                  {books.map((book) => (
                     <tr key={book.id}>
                       <td>{book.title}</td>
                       <td>{book.author}</td>

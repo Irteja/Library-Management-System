@@ -23,36 +23,28 @@ export default function MemberManagement() {
   const [memberMessage, setMemberMessage] = useState('');
 
   // Search and Pagination
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
-
-  const filteredMembers = members.filter((member) => {
-    const term = searchTerm.toLowerCase();
-    const fullName = `${member.firstName} ${member.lastName}`.toLowerCase();
-    return (
-      fullName.includes(term) ||
-      (member.email && member.email.toLowerCase().includes(term))
-    );
-  });
-
-  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentMembers = filteredMembers.slice(startIndex, startIndex + itemsPerPage);
 
   const loadData = () => {
     setLoading(true);
     setError('');
     
-    getMembers()
-      .then(res => setMembers(res.data))
+    getMembers({ search: searchQuery, page: currentPage, size: itemsPerPage })
+      .then(res => {
+        setMembers(res.data.items || []);
+        setTotalPages(res.data.totalPages || 1);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentPage, searchQuery]);
 
   const extractError = (err) => {
     const data = err.response?.data;
@@ -140,19 +132,21 @@ export default function MemberManagement() {
       <section className="panel">
         <h2>Members Directory</h2>
 
-        {!loading && !error && members.length > 0 && (
-          <div style={{ marginBottom: '1rem' }}>
+        {!loading && !error && (
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            setSearchQuery(searchInput);
+            setCurrentPage(1);
+          }} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
             <input
               type="text"
               placeholder="Search by name or email..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               style={{ padding: '0.5rem', width: '100%', maxWidth: '300px', borderRadius: '4px', border: '1px solid #ccc' }}
             />
-          </div>
+            <button type="submit" className="btn btn-primary">Search</button>
+          </form>
         )}
 
         {loading && <p className="muted">Loading members...</p>}
@@ -170,8 +164,8 @@ export default function MemberManagement() {
                 </tr>
               </thead>
               <tbody>
-                {currentMembers.length > 0 ? (
-                  currentMembers.map((member) => (
+                {members.length > 0 ? (
+                  members.map((member) => (
                     <tr key={member.id}>
                       <td>
                         {member.firstName} {member.lastName}

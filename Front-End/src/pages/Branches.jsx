@@ -18,33 +18,27 @@ export default function Branches() {
   const [message, setMessage] = useState('');
 
   // Search and Pagination
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
-
-  const filteredBranches = branches.filter((branch) => {
-    const term = searchTerm.toLowerCase();
-    return (
-      (branch.name && branch.name.toLowerCase().includes(term)) ||
-      (branch.address && branch.address.toLowerCase().includes(term)) ||
-      (branch.email && branch.email.toLowerCase().includes(term))
-    );
-  });
-
-  const totalPages = Math.ceil(filteredBranches.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentBranches = filteredBranches.slice(startIndex, startIndex + itemsPerPage);
 
   const loadBranches = () => {
     setLoading(true);
     setError('');
-    getBranches()
-      .then(({ data }) => setBranches(data))
+    getBranches({ search: searchQuery, page: currentPage, size: itemsPerPage })
+      .then(({ data }) => {
+        setBranches(data.items || []);
+        setTotalPages(data.totalPages || 1);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
 
-  useEffect(loadBranches, []);
+  useEffect(() => {
+    loadBranches();
+  }, [currentPage, searchQuery]);
 
   const handleChange = (event) => {
     setForm({ ...form, [event.target.name]: event.target.value });
@@ -103,19 +97,21 @@ export default function Branches() {
       <section className="panel">
         <h2>Branches</h2>
 
-        {!loading && !error && branches.length > 0 && (
-          <div style={{ marginBottom: '1rem' }}>
+        {!loading && !error && (
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            setSearchQuery(searchInput);
+            setCurrentPage(1);
+          }} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
             <input
               type="text"
               placeholder="Search by name, address, or email..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               style={{ padding: '0.5rem', width: '100%', maxWidth: '300px', borderRadius: '4px', border: '1px solid #ccc' }}
             />
-          </div>
+            <button type="submit" className="btn btn-primary">Search</button>
+          </form>
         )}
 
         {loading && <p className="muted">Loading branches...</p>}
@@ -133,8 +129,8 @@ export default function Branches() {
                 </tr>
               </thead>
               <tbody>
-                {currentBranches.length > 0 ? (
-                  currentBranches.map((branch) => (
+                {branches.length > 0 ? (
+                  branches.map((branch) => (
                     <tr key={branch.id}>
                       <td>{branch.name}</td>
                       <td>{branch.address}</td>

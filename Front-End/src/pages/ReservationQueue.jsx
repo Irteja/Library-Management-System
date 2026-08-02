@@ -14,7 +14,9 @@ export default function ReservationQueue() {
   const [branches, setBranches] = useState([]);
   const [reservations, setReservations] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
   const [form, setForm] = useState({ memberId: '', bookId: '', branchId: '' });
@@ -28,28 +30,34 @@ export default function ReservationQueue() {
 
   const loadOptions = async () => {
     const [memberRes, bookRes, branchRes] = await Promise.all([
-      getMembers(),
-      getBooks(),
-      getBranches(),
+      getMembers({ size: 1000 }),
+      getBooks({ size: 1000 }),
+      getBranches({ size: 1000 }),
     ]);
-    setMembers(memberRes.data);
-    setBooks(bookRes.data);
-    setBranches(branchRes.data);
+    setMembers(memberRes.data.items || []);
+    setBooks(bookRes.data.items || []);
+    setBranches(branchRes.data.items || []);
   };
 
   const loadQueue = () => {
     setLoading(true);
     setError('');
-    getActiveReservations()
-      .then(({ data }) => setReservations(data))
+    getActiveReservations({ search: searchQuery, page: currentPage, size: itemsPerPage })
+      .then(({ data }) => {
+        setReservations(data.items || []);
+        setTotalPages(data.totalPages || 1);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     loadOptions().catch((err) => setFormError(err.message));
-    loadQueue();
   }, []);
+
+  useEffect(() => {
+    loadQueue();
+  }, [currentPage, searchQuery]);
 
   const handleChange = (event) => {
     setForm({ ...form, [event.target.name]: event.target.value });
@@ -89,18 +97,7 @@ export default function ReservationQueue() {
   const activeMembers = members.filter((member) => member.isActive);
   const activeBranches = branches.filter((branch) => branch.isActive);
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-    setCurrentPage(1);
-  };
 
-  const filteredReservations = reservations.filter(res =>
-    (res.memberName && res.memberName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (res.bookTitle && res.bookTitle.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-  const totalPages = Math.ceil(filteredReservations.length / itemsPerPage) || 1;
-  const paginatedReservations = filteredReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div>
@@ -164,16 +161,21 @@ export default function ReservationQueue() {
         {error && <p className="error">Failed to load reservations: {error}</p>}
         {!loading && !error && (
           <>
-            <div style={{ marginBottom: '1rem' }}>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              setSearchQuery(searchInput);
+              setCurrentPage(1);
+            }} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
               <input
                 type="text"
                 placeholder="Search by member name or book title..."
-                value={searchQuery}
-                onChange={handleSearchChange}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 style={{ padding: '0.5rem', width: '100%', maxWidth: '400px' }}
               />
-            </div>
-            {filteredReservations.length > 0 ? (
+              <button type="submit" className="btn btn-primary">Search</button>
+            </form>
+            {reservations.length > 0 ? (
               <>
                 <table className="data-table">
                   <thead>
@@ -187,7 +189,7 @@ export default function ReservationQueue() {
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedReservations.map((reservation) => (
+                    {reservations.map((reservation) => (
                       <tr key={reservation.id}>
                         <td>{reservation.queuePosition}</td>
                         <td>
