@@ -142,8 +142,8 @@ export default function Books() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h1 style={{ margin: 0 }}>Books Catalog</h1>
+      <div className="page-header">
+        <h1>Books Catalog</h1>
         {isStaff && !showForm && (
           <button className="btn btn-primary" onClick={handleCreateClick}>
             + Add New Book
@@ -152,7 +152,7 @@ export default function Books() {
       </div>
 
       {showForm && (
-        <section className="panel" style={{ marginBottom: '2rem' }}>
+        <section className="panel">
           <h2>{editingBookId ? 'Edit Book' : 'Add New Book'}</h2>
           <form className="form-grid" onSubmit={handleSubmit}>
             <label className="form-field">
@@ -237,7 +237,7 @@ export default function Books() {
                 <td>{book.availableCopies} / {book.totalCopies}</td>
                 {isStaff && (
                   <td>
-                    <button className="btn btn-outline" style={{ padding: '0.25rem 0.5rem', fontSize: '0.875rem' }} onClick={() => handleEditClick(book)}>
+                    <button className="btn btn-outline btn-sm" onClick={() => handleEditClick(book)}>
                       Edit
                     </button>
                   </td>

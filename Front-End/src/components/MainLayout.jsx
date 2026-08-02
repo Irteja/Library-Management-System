@@ -40,8 +40,10 @@ export default function MainLayout() {
   const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(role));
 
   const handleLogout = () => {
-    logout();
-    navigate('/login', { replace: true });
+    navigate('/login', { replace: true, state: {} });
+    setTimeout(() => {
+      logout();
+    }, 0);
   };
 
   const navLinkClass = ({ isActive }) => (isActive ? 'nav-link active' : 'nav-link');

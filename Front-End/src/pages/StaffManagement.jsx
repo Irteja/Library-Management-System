@@ -76,8 +76,8 @@ export default function StaffManagement() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h1 style={{ margin: 0 }}>Staff Management</h1>
+      <div className="page-header">
+        <h1>Staff Management</h1>
         {!showForm && (
           <button className="btn btn-primary" onClick={() => setShowForm(true)}>
             + Register New Librarian
@@ -87,9 +87,9 @@ export default function StaffManagement() {
 
       {/* Create Librarian Form */}
       {showForm && (
-        <section className="panel" style={{ marginBottom: '2rem' }}>
+        <section className="panel">
           <h2>Register New Librarian</h2>
-          <p className="muted" style={{ marginBottom: '1rem' }}>Assign a new librarian to a specific branch.</p>
+          <p className="muted">Assign a new librarian to a specific branch.</p>
           <form className="form-grid" onSubmit={handleSubmit}>
             <label className="form-field">
               <span>First Name</span>
