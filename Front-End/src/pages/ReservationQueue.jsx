@@ -85,7 +85,6 @@ export default function ReservationQueue() {
 
   const activeMembers = members.filter((member) => member.isActive);
   const activeBranches = branches.filter((branch) => branch.isActive);
-  const outOfStockBooks = books.filter((book) => book.availableCopies === 0);
 
   return (
     <div>
@@ -110,11 +109,14 @@ export default function ReservationQueue() {
             <span>Book</span>
             <select name="bookId" value={form.bookId} onChange={handleChange} required>
               <option value="">Select book...</option>
-              {outOfStockBooks.map((book) => (
-                <option key={book.id} value={book.id}>
-                  {book.title} - {book.author}
-                </option>
-              ))}
+              {books.map((book) => {
+                const isAvailable = book.availableCopies > 0;
+                return (
+                  <option key={book.id} value={book.id} disabled={isAvailable}>
+                    {book.title} - {book.author} {isAvailable ? '(Available to borrow)' : ''}
+                  </option>
+                );
+              })}
             </select>
           </label>
 
