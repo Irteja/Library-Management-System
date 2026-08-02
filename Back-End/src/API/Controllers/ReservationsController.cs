@@ -48,9 +48,9 @@ public class ReservationsController : ControllerBase
 
     [HttpGet("active")]
     [Authorize(Roles = "Admin,Librarian")]
-    public async Task<IActionResult> GetActiveReservations()
+    public async Task<IActionResult> GetActiveReservations([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int size = 10)
     {
-        var reservations = await _mediator.Send(new GetActiveReservationsQuery());
+        var reservations = await _mediator.Send(new GetActiveReservationsQuery(search, page, size));
         return Ok(reservations);
     }
 

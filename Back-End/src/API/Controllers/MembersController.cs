@@ -26,9 +26,9 @@ public class MembersController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = "Admin,Librarian")]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int size = 10)
     {
-        var members = await _mediator.Send(new GetAllMembersQuery());
+        var members = await _mediator.Send(new GetAllMembersQuery(search, page, size));
         return Ok(members);
     }
 

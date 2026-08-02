@@ -22,9 +22,9 @@ public class BranchesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int size = 10)
     {
-        var branches = await _mediator.Send(new GetAllBranchesQuery());
+        var branches = await _mediator.Send(new GetAllBranchesQuery(search, page, size));
         return Ok(branches);
     }
 

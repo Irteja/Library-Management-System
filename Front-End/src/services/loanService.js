@@ -1,8 +1,8 @@
 import api from './api';
 
-export const getActiveLoans = () => api.get('/Loans/active');
+export const getActiveLoans = (params) => api.get('/Loans/active', { params });
 
-export const getMyLoans = () => api.get('/Loans/my');
+export const getMyLoans = (params) => api.get('/Loans/my', { params });
 
 export const borrowBook = (payload) => api.post('/Loans/borrow', payload);
 

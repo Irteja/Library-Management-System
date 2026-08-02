@@ -1,8 +1,8 @@
 import api from './api';
 
-export const getActiveReservations = () => api.get('/Reservations/active');
+export const getActiveReservations = (params) => api.get('/Reservations/active', { params });
 
-export const getMyReservations = () => api.get('/Reservations/my');
+export const getMyReservations = (params) => api.get('/Reservations/my', { params });
 
 export const placeReservation = (payload) => api.post('/Reservations', payload);
 

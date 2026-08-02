@@ -1,4 +1,5 @@
 using LibraryManagementSystem.Application.Common.Interfaces;
+using LibraryManagementSystem.Application.Common.Models;
 using LibraryManagementSystem.Application.Loans.DTOs;
 using LibraryManagementSystem.Domain.Enums;
 using MediatR;
@@ -6,19 +7,26 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagementSystem.Application.Loans.Queries.GetActiveLoans;
 
-public class GetActiveLoansQueryHandler : IRequestHandler<GetActiveLoansQuery, List<LoanDto>>
+public class GetActiveLoansQueryHandler : IRequestHandler<GetActiveLoansQuery, PaginatedList<LoanDto>>
 {
     private readonly IApplicationDbContext _context;
 
     public GetActiveLoansQueryHandler(IApplicationDbContext context) => _context = context;
 
-    public async Task<List<LoanDto>> Handle(GetActiveLoansQuery request, CancellationToken cancellationToken)
+    public async Task<PaginatedList<LoanDto>> Handle(GetActiveLoansQuery request, CancellationToken cancellationToken)
     {
-        return await _context.Loans
+        var query = _context.Loans
             .Include(l => l.Book)
             .Include(l => l.Member)
             .Where(l => l.Status == LoanStatus.Active)
-            .OrderByDescending(l => l.LoanDate)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            query = query.Where(l => l.Book.Title.Contains(request.SearchTerm) || l.Member.FirstName.Contains(request.SearchTerm) || l.Member.LastName.Contains(request.SearchTerm));
+        }
+
+        var projectedQuery = query.OrderByDescending(l => l.LoanDate)
             .Select(l => new LoanDto(
                 l.Id,
                 l.BookId,
@@ -31,7 +39,8 @@ public class GetActiveLoansQueryHandler : IRequestHandler<GetActiveLoansQuery, L
                 l.DueDate,
                 l.ReturnDate,
                 l.Status.ToString()
-            ))
-            .ToListAsync(cancellationToken);
+            ));
+
+        return await PaginatedList<LoanDto>.CreateAsync(projectedQuery, request.PageNumber, request.PageSize);
     }
 }

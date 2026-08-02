@@ -41,9 +41,9 @@ public class LoansController : ControllerBase
 
     [HttpGet("active")]
     [Authorize(Roles = "Admin,Librarian")]
-    public async Task<IActionResult> GetActiveLoans()
+    public async Task<IActionResult> GetActiveLoans([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int size = 10)
     {
-        var loans = await _mediator.Send(new GetActiveLoansQuery());
+        var loans = await _mediator.Send(new GetActiveLoansQuery(search, page, size));
         return Ok(loans);
     }
 

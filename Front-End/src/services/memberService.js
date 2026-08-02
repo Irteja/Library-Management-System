@@ -1,6 +1,6 @@
 import api from './api';
 
-export const getMembers = () => api.get('/Members');
+export const getMembers = (params) => api.get('/Members', { params });
 
 export const getMyProfile = () => api.get('/Members/me');
 

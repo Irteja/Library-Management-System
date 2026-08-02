@@ -25,9 +25,9 @@ public class LibrariansController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int size = 10)
     {
-        var librarians = await _mediator.Send(new LibraryManagementSystem.Application.Librarians.Queries.GetAllLibrarians.GetAllLibrariansQuery());
+        var librarians = await _mediator.Send(new LibraryManagementSystem.Application.Librarians.Queries.GetAllLibrarians.GetAllLibrariansQuery(search, page, size));
         return Ok(librarians);
     }
 }
