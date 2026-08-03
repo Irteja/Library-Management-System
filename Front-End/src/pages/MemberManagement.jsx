@@ -22,6 +22,7 @@ export default function MemberManagement() {
   const [memberFormError, setMemberFormError] = useState('');
   const [memberSubmitting, setMemberSubmitting] = useState(false);
   const [memberMessage, setMemberMessage] = useState('');
+  const [showForm, setShowForm] = useState(false);
 
   // Search and Pagination
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,6 +81,7 @@ export default function MemberManagement() {
       await createMember(payload);
       setMemberForm(emptyMemberForm);
       setMemberMessage('Member created successfully.');
+      setShowForm(false);
       loadData();
     } catch (err) {
       setMemberFormError(extractError(err));
@@ -114,9 +116,17 @@ export default function MemberManagement() {
 
   return (
     <div>
-      <h1>Member Management</h1>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Member Management</h1>
+        {!showForm && (
+          <button className="btn btn-primary" onClick={() => { setMemberForm(emptyMemberForm); setMemberFormError(''); setMemberMessage(''); setShowForm(true); }}>
+            + Register New Member
+          </button>
+        )}
+      </div>
 
       {/* Create Member Section */}
+      {showForm && (
       <section className="panel">
         <h2>Register New Member</h2>
         <form className="form-grid" onSubmit={handleMemberSubmit}>
@@ -154,6 +164,9 @@ export default function MemberManagement() {
             />
           </div>
           <div className="form-actions">
+            <button className="btn btn-outline" type="button" onClick={() => setShowForm(false)} disabled={memberSubmitting}>
+              Cancel
+            </button>
             <button className="btn btn-primary" type="submit" disabled={memberSubmitting}>
               {memberSubmitting ? 'Creating...' : 'Create Member'}
             </button>
@@ -162,6 +175,7 @@ export default function MemberManagement() {
         {memberFormError && <p className="error">{memberFormError}</p>}
         {memberMessage && <p className="success">{memberMessage}</p>}
       </section>
+      )}
 
       {/* Members List */}
       <section className="panel">

@@ -20,6 +20,7 @@ export default function BorrowReturn() {
   const [formError, setFormError] = useState('');
   const [formMessage, setFormMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -73,6 +74,7 @@ export default function BorrowReturn() {
       await borrowBook(payload);
       setFormMessage('Book issued successfully.');
       setForm({ memberId: '', bookId: '', branchId: '', dueDate: null });
+      setShowForm(false);
       loadLoans();
     } catch (err) {
       setFormError(err.response?.data?.title ?? 'Failed to issue loan.');
@@ -103,8 +105,16 @@ export default function BorrowReturn() {
 
   return (
     <div>
-      <h1>Borrow &amp; Return (Updated)</h1>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Borrow &amp; Return (Updated)</h1>
+        {!showForm && (
+          <button className="btn btn-primary" onClick={() => { setForm({ memberId: '', bookId: '', branchId: '', dueDate: null }); setFormError(''); setFormMessage(''); setShowForm(true); }}>
+            + Issue a Loan
+          </button>
+        )}
+      </div>
 
+      {showForm && (
       <section className="panel">
         <h2>Issue a Loan</h2>
         <form className="form-grid" onSubmit={handleBorrow}>
@@ -155,6 +165,9 @@ export default function BorrowReturn() {
           </div>
 
           <div className="form-actions">
+            <button className="btn btn-outline" type="button" onClick={() => setShowForm(false)} disabled={submitting}>
+              Cancel
+            </button>
             <button className="btn btn-primary" type="submit" disabled={submitting}>
               {submitting ? 'Issuing...' : 'Issue Book'}
             </button>
@@ -163,6 +176,7 @@ export default function BorrowReturn() {
         {formError && <p className="error">{formError}</p>}
         {formMessage && <p className="success">{formMessage}</p>}
       </section>
+      )}
 
       <section className="panel">
         <h2>Active Loans</h2>

@@ -23,6 +23,7 @@ export default function ReservationQueue() {
   const [formError, setFormError] = useState('');
   const [formMessage, setFormMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -72,6 +73,7 @@ export default function ReservationQueue() {
       await placeReservation(form);
       setFormMessage('Reservation placed successfully.');
       setForm({ memberId: '', bookId: '', branchId: '' });
+      setShowForm(false);
       loadQueue();
     } catch (err) {
       setFormError(err.response?.data?.title ?? 'Failed to place reservation.');
@@ -101,8 +103,16 @@ export default function ReservationQueue() {
 
   return (
     <div>
-      <h1>Reservation Queue</h1>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Reservation Queue</h1>
+        {!showForm && (
+          <button className="btn btn-primary" onClick={() => { setForm({ memberId: '', bookId: '', branchId: '' }); setFormError(''); setFormMessage(''); setShowForm(true); }}>
+            + Place a Reservation
+          </button>
+        )}
+      </div>
 
+      {showForm && (
       <section className="panel">
         <h2>Place a Reservation</h2>
         <form className="form-grid" onSubmit={handleReserve}>
@@ -146,6 +156,9 @@ export default function ReservationQueue() {
           </label>
 
           <div className="form-actions">
+            <button className="btn btn-outline" type="button" onClick={() => setShowForm(false)} disabled={submitting}>
+              Cancel
+            </button>
             <button className="btn btn-primary" type="submit" disabled={submitting}>
               {submitting ? 'Placing...' : 'Place Reservation'}
             </button>
@@ -154,6 +167,7 @@ export default function ReservationQueue() {
         {formError && <p className="error">{formError}</p>}
         {formMessage && <p className="success">{formMessage}</p>}
       </section>
+      )}
 
       <section className="panel">
         <h2>Active Reservations</h2>

@@ -16,6 +16,7 @@ export default function Branches() {
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
+  const [showForm, setShowForm] = useState(false);
 
   // Search and Pagination
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,6 +54,7 @@ export default function Branches() {
       await createBranch(form);
       setForm(emptyForm);
       setMessage('Branch created successfully.');
+      setShowForm(false);
       loadBranches();
     } catch (err) {
       setFormError(err.response?.data?.title ?? 'Failed to create branch.');
@@ -63,10 +65,18 @@ export default function Branches() {
 
   return (
     <div>
-      <h1>Branches</h1>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Branches</h1>
+        {!showForm && (
+          <button className="btn btn-primary" onClick={() => { setForm(emptyForm); setFormError(''); setMessage(''); setShowForm(true); }}>
+            + Add New Branch
+          </button>
+        )}
+      </div>
 
-      <section className="panel">
-        <h2>Add New Branch</h2>
+      {showForm && (
+        <section className="panel">
+          <h2>Add New Branch</h2>
         <form className="form-grid" onSubmit={handleSubmit}>
           <label className="form-field">
             <span>Name</span>
@@ -85,6 +95,9 @@ export default function Branches() {
             <input type="email" name="email" value={form.email} onChange={handleChange} required />
           </label>
           <div className="form-actions">
+            <button className="btn btn-outline" type="button" onClick={() => setShowForm(false)} disabled={submitting}>
+              Cancel
+            </button>
             <button className="btn btn-primary" type="submit" disabled={submitting}>
               {submitting ? 'Creating...' : 'Create Branch'}
             </button>
@@ -93,6 +106,7 @@ export default function Branches() {
         {formError && <p className="error">{formError}</p>}
         {message && <p className="success">{message}</p>}
       </section>
+      )}
 
       <section className="panel">
         <h2>Branches</h2>
