@@ -45,7 +45,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.ISBN).HasMaxLength(20).IsRequired();
-            entity.HasIndex(e => e.ISBN).IsUnique();
+            entity.HasIndex(e => new { e.ISBN, e.BranchId }).IsUnique();
             entity.Property(e => e.Title).HasMaxLength(300).IsRequired();
             entity.Property(e => e.Author).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Publisher).HasMaxLength(200);

@@ -92,7 +92,7 @@ public class BorrowBookCommandHandlerTests
     {
         var book = _books[0];
         var member = _members[0];
-        var command = new BorrowBookCommand(book.Id, member.Id, book.BranchId);
+        var command = new BorrowBookCommand(book.Id, member.Id, book.BranchId, null);
 
         var loanId = await _handler.Handle(command, CancellationToken.None);
 
@@ -113,7 +113,7 @@ public class BorrowBookCommandHandlerTests
     {
         var book = _books[1];
         var member = _members[0];
-        var command = new BorrowBookCommand(book.Id, member.Id, book.BranchId);
+        var command = new BorrowBookCommand(book.Id, member.Id, book.BranchId, null);
 
         var act = () => _handler.Handle(command, CancellationToken.None);
 
