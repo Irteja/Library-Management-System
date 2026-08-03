@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import DateInput from '../components/DateInput';
 import { getBooks } from '../services/bookService';
 import { getBranches } from '../services/branchService';
 import { borrowBook, getActiveLoans, returnBook } from '../services/loanService';
@@ -15,7 +16,7 @@ export default function BorrowReturn() {
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
-  const [form, setForm] = useState({ memberId: '', bookId: '', branchId: '' });
+  const [form, setForm] = useState({ memberId: '', bookId: '', branchId: '', dueDate: null });
   const [formError, setFormError] = useState('');
   const [formMessage, setFormMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -65,9 +66,13 @@ export default function BorrowReturn() {
     setFormMessage('');
     setSubmitting(true);
     try {
-      await borrowBook(form);
+      const payload = {
+        ...form,
+        dueDate: form.dueDate?.toISOString() ?? undefined,
+      };
+      await borrowBook(payload);
       setFormMessage('Book issued successfully.');
-      setForm({ memberId: '', bookId: '', branchId: '' });
+      setForm({ memberId: '', bookId: '', branchId: '', dueDate: null });
       loadLoans();
     } catch (err) {
       setFormError(err.response?.data?.title ?? 'Failed to issue loan.');
@@ -98,7 +103,7 @@ export default function BorrowReturn() {
 
   return (
     <div>
-      <h1>Borrow &amp; Return</h1>
+      <h1>Borrow &amp; Return (Updated)</h1>
 
       <section className="panel">
         <h2>Issue a Loan</h2>
@@ -138,6 +143,16 @@ export default function BorrowReturn() {
               ))}
             </select>
           </label>
+
+          <div className="form-field">
+            <span>Return Date</span>
+            <DateInput
+              selected={form.dueDate}
+              onChange={(date) => setForm({ ...form, dueDate: date })}
+              minDate={new Date()}
+              placeholderText="Select return date..."
+            />
+          </div>
 
           <div className="form-actions">
             <button className="btn btn-primary" type="submit" disabled={submitting}>

@@ -66,7 +66,7 @@ public class BorrowBookCommandHandler : IRequestHandler<BorrowBookCommand, Guid>
             MemberId = memberId,
             BranchId = request.BranchId,
             LoanDate = DateTime.UtcNow,
-            DueDate = DateTime.UtcNow.AddDays(14),
+            DueDate = request.DueDate ?? DateTime.UtcNow.AddDays(14),
             Status = LoanStatus.Active
         };
 

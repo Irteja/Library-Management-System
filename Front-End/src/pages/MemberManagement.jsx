@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import DateInput from '../components/DateInput';
 import { createMember, getMembers, updateMember } from '../services/memberService';
 
 const emptyMemberForm = {
@@ -6,7 +7,7 @@ const emptyMemberForm = {
   lastName: '',
   email: '',
   phone: '',
-  membershipExpiryDate: '',
+  membershipExpiryDate: null,
   username: '',
   password: '',
 };
@@ -31,7 +32,7 @@ export default function MemberManagement() {
 
   // Extension state
   const [extendingMember, setExtendingMember] = useState(null);
-  const [newExpiryDate, setNewExpiryDate] = useState('');
+  const [newExpiryDate, setNewExpiryDate] = useState(null);
   const [isExtending, setIsExtending] = useState(false);
 
   const loadData = () => {
@@ -71,7 +72,7 @@ export default function MemberManagement() {
 
     const payload = {
       ...memberForm,
-      membershipExpiryDate: new Date(memberForm.membershipExpiryDate).toISOString(),
+      membershipExpiryDate: memberForm.membershipExpiryDate?.toISOString(),
     };
 
     setMemberSubmitting(true);
@@ -98,11 +99,11 @@ export default function MemberManagement() {
         email: extendingMember.email,
         phone: extendingMember.phone,
         isActive: extendingMember.isActive,
-        membershipExpiryDate: new Date(newExpiryDate).toISOString(),
+        membershipExpiryDate: newExpiryDate?.toISOString(),
       };
       await updateMember(extendingMember.id, payload);
       setExtendingMember(null);
-      setNewExpiryDate('');
+      setNewExpiryDate(null);
       loadData();
     } catch (err) {
       alert(extractError(err));
@@ -143,10 +144,15 @@ export default function MemberManagement() {
             <span>Password</span>
             <input type="password" name="password" value={memberForm.password} onChange={handleMemberChange} required autoComplete="new-password" placeholder="Min. 6 characters" />
           </label>
-          <label className="form-field">
+          <div className="form-field">
             <span>Membership Expiry</span>
-            <input type="date" name="membershipExpiryDate" value={memberForm.membershipExpiryDate} onChange={handleMemberChange} required />
-          </label>
+            <DateInput
+              selected={memberForm.membershipExpiryDate}
+              onChange={(date) => handleMemberChange({ target: { name: 'membershipExpiryDate', value: date } })}
+              minDate={new Date()}
+              placeholderText="Select expiry date..."
+            />
+          </div>
           <div className="form-actions">
             <button className="btn btn-primary" type="submit" disabled={memberSubmitting}>
               {memberSubmitting ? 'Creating...' : 'Create Member'}
@@ -182,15 +188,15 @@ export default function MemberManagement() {
               <div className="panel" style={{ marginBottom: '1rem', border: '1px solid var(--primary-color)' }}>
                 <h3>Extend Membership for {extendingMember.firstName} {extendingMember.lastName}</h3>
                 <form onSubmit={handleExtendSubmit} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                  <label className="form-field">
+                  <div className="form-field">
                     <span>New Expiry Date</span>
-                    <input 
-                      type="date" 
-                      value={newExpiryDate} 
-                      onChange={(e) => setNewExpiryDate(e.target.value)} 
-                      required 
+                    <DateInput
+                      selected={newExpiryDate}
+                      onChange={(date) => setNewExpiryDate(date)}
+                      minDate={new Date()}
+                      placeholderText="Select new expiry date..."
                     />
-                  </label>
+                  </div>
                   <div className="form-actions">
                     <button type="submit" className="btn btn-primary" disabled={isExtending}>Confirm</button>
                     <button type="button" className="btn btn-outline" onClick={() => setExtendingMember(null)}>Cancel</button>
