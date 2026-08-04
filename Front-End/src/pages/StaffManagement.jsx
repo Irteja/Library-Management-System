@@ -1,6 +1,20 @@
 import { useEffect, useState } from 'react';
 import { getLibrarians, createLibrarian } from '../services/librarianService';
-import { getBranches } from '../services/branchService';
+import { getBranchesCursor } from '../services/branchService';
+
+const loadAllBranches = async () => {
+  let allBranches = [];
+  let currentCursor = null;
+  let hasNext = true;
+  
+  while (hasNext) {
+    const res = await getBranchesCursor(currentCursor, 100);
+    allBranches = [...allBranches, ...res.data.items];
+    currentCursor = res.data.nextCursor;
+    hasNext = res.data.hasNextPage;
+  }
+  return allBranches;
+};
 
 const emptyLibrarianForm = {
   firstName: '',
@@ -40,7 +54,7 @@ export default function StaffManagement() {
         setLibrarians(res.data.items || []);
         setTotalPages(res.data.totalPages || 1);
       }),
-      getBranches({ size: 1000 }).then(res => setBranches(res.data.items || []))
+      loadAllBranches().then(branches => setBranches(branches))
     ])
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));

@@ -1,7 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getBooks, createBook, updateBook } from '../services/bookService';
-import { getBranches } from '../services/branchService';
+import { getBranchesCursor } from '../services/branchService';
+
+const loadAllBranches = async () => {
+  let allBranches = [];
+  let currentCursor = null;
+  let hasNext = true;
+  
+  while (hasNext) {
+    const res = await getBranchesCursor(currentCursor, 100);
+    allBranches = [...allBranches, ...res.data.items];
+    currentCursor = res.data.nextCursor;
+    hasNext = res.data.hasNextPage;
+  }
+  return allBranches;
+};
 
 const emptyForm = {
   isbn: '',
@@ -44,7 +58,7 @@ export default function Books() {
         setBooks(res.data.items || []);
         setTotalPages(res.data.totalPages || 1);
       }),
-      isStaff ? getBranches({ size: 1000 }).then(res => setBranches(res.data.items || [])) : Promise.resolve()
+      isStaff ? loadAllBranches().then(branches => setBranches(branches)) : Promise.resolve()
     ])
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));

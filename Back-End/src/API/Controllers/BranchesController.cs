@@ -3,6 +3,7 @@ using LibraryManagementSystem.Application.Branches.Commands.DeleteBranch;
 using LibraryManagementSystem.Application.Branches.Commands.UpdateBranch;
 using LibraryManagementSystem.Application.Branches.Queries.GetAllBranches;
 using LibraryManagementSystem.Application.Branches.Queries.GetBranchById;
+using LibraryManagementSystem.Application.Branches.Queries.GetBranchesCursor;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,13 @@ public class BranchesController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int size = 10)
     {
         var branches = await _mediator.Send(new GetAllBranchesQuery(search, page, size));
+        return Ok(branches);
+    }
+
+    [HttpGet("cursor")]
+    public async Task<IActionResult> GetByCursor([FromQuery] string? cursor, [FromQuery] int limit = 50)
+    {
+        var branches = await _mediator.Send(new GetBranchesCursorQuery(cursor, limit));
         return Ok(branches);
     }
 

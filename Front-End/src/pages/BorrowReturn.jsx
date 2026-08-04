@@ -1,7 +1,21 @@
 import { useEffect, useState } from 'react';
 import DateInput from '../components/DateInput';
 import { getBooks } from '../services/bookService';
-import { getBranches } from '../services/branchService';
+import { getBranchesCursor } from '../services/branchService';
+
+const loadAllBranches = async () => {
+  let allBranches = [];
+  let currentCursor = null;
+  let hasNext = true;
+  
+  while (hasNext) {
+    const res = await getBranchesCursor(currentCursor, 100);
+    allBranches = [...allBranches, ...res.data.items];
+    currentCursor = res.data.nextCursor;
+    hasNext = res.data.hasNextPage;
+  }
+  return allBranches;
+};
 import { borrowBook, getActiveLoans, returnBook } from '../services/loanService';
 import { getMembers } from '../services/memberService';
 
@@ -30,11 +44,11 @@ export default function BorrowReturn() {
     const [memberRes, bookRes, branchRes] = await Promise.all([
       getMembers({ size: 1000 }),
       getBooks({ size: 1000 }),
-      getBranches({ size: 1000 }),
+      loadAllBranches(),
     ]);
     setMembers(memberRes.data.items || []);
     setBooks(bookRes.data.items || []);
-    setBranches(branchRes.data.items || []);
+    setBranches(branchRes);
   };
 
   const loadLoans = () => {
