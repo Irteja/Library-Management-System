@@ -81,6 +81,8 @@ public class BorrowBookCommandHandlerTests
             .ReturnsAsync(1);
 
         var memberAccessMock = new Mock<LibraryManagementSystem.Application.Common.Services.IMemberAccessService>();
+        memberAccessMock.Setup(m => m.GetAccessibleMemberIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                        .ReturnsAsync((Guid id, CancellationToken ct) => id);
         var currentUserMock = new Mock<ICurrentUserService>();
         currentUserMock.SetupGet(m => m.Role).Returns("Member");
 
